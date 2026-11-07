@@ -12,10 +12,8 @@
 #include "freertos/semphr.h"
 #include "lvgl.h"
 
-/* Full pages are drawn into the framebuffer the panel is not scanning.
- * panel_7b_draw then points the LCD DMA at that buffer, so the new page
- * appears in one frame. A slider only touches the buffer already on glass,
- * and does not wait for a DMA switch. */
+/* LVGL renders every dirty region into the back framebuffer. After the final
+ * flush, panel_7b_draw switches the RGB scanout to that completed page. */
 
 static lv_color_t *s_partial = nullptr;
 static uint16_t *s_shown = nullptr;
