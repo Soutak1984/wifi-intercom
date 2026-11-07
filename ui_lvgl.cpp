@@ -2844,8 +2844,8 @@ static void build_setup(lv_obj_t *v) {
     s_aec_side = label_at(v, 500, 244, &lv_font_montserrat_14, C_TEXT, "40 ms");
     make_btn(v, 52, 290, 80, 64, "-", "", on_aec_step, (void *)(intptr_t)-20);
     s_aec_lbl = lv_textarea_create(v);
-    lv_obj_set_pos(s_aec_lbl, 180, 296);
-    lv_obj_set_size(s_aec_lbl, 160, 48);
+    lv_obj_set_pos(s_aec_lbl, 180, 292);
+    lv_obj_set_size(s_aec_lbl, 160, 40);
     style_ta(s_aec_lbl);
     lv_obj_set_style_pad_hor(s_aec_lbl, 12, 0);
     lv_obj_set_style_pad_ver(s_aec_lbl, 8, 0);
