@@ -2986,6 +2986,10 @@ static void build_power(lv_obj_t *v) {
 static void build_wifi(lv_obj_t *v) {
     Btn hide;
     Btn save;
+    label_at(v, 28, 88, &lv_font_montserrat_32, C_TEXT, "Wi-Fi connection");
+    label_at(v, 30, 126, &lv_font_montserrat_16, C_MUTED,
+             "Connect this station to a 2.4 GHz wireless network.");
+    card_at(v, 28, 164, 968, 164, C_SURF, 22);
     label_at(v, 48, 78, &lv_font_montserrat_36, C_TEXT, "Wi-Fi");
     label_at(v, 220, 92, &lv_font_montserrat_16, C_MUTED,
              "Tap a box. Empty password means an open network.");
@@ -3027,6 +3031,10 @@ static void build_net(lv_obj_t *v) {
     Btn save;
     int i;
     static const int xs[] = {24, 271, 518, 765};
+    label_at(v, 28, 88, &lv_font_montserrat_32, C_TEXT, "Station network setup");
+    label_at(v, 30, 126, &lv_font_montserrat_16, C_MUTED,
+             "Select the station identity and edit its network addressing.");
+    card_at(v, 28, 164, 968, 228, C_SURF, 22);
     label_at(v, 24, 78, &lv_font_montserrat_32, C_TEXT, "Station");
     save = make_btn(v, 620, 74, 180, 48, "Save", "", on_net_save, NULL);
     tone(&save, T_AMBER);
