@@ -31,8 +31,8 @@ static usb_phy_handle_t s_phy = NULL;
 
 #define RING 1024
 #define RING_MASK (RING - 1)
-#define ISOC_PKTS 4
-#define URB_COUNT 2
+#define ISOC_PKTS 1
+#define URB_COUNT 4
 #define MAX_PAYLOAD 288
 #define MAX_ALTS 12
 #define MAX_UNITS 6
@@ -971,6 +971,13 @@ static bool parse_device(const usb_config_desc_t *cfg, alt_cand *best_in, alt_ca
                 cur.in_dir = (p[2] & 0x80) != 0;
                 cur.mps = mps;
                 cur.interval = p[6];
+                if (cur.in_dir && len >= 9) {
+                    Serial0.printf("usb: mic ep desc ep=%02x attr=%02x sync=%u usage=%u interval=%u mps=%u refresh=%u synch_ep=%02x\n",
+                                   p[2], attr, (unsigned)((attr >> 2) & 0x03),
+                                   (unsigned)((attr >> 4) & 0x03),
+                                   (unsigned)p[6], (unsigned)mps,
+                                   (unsigned)p[7], p[8]);
+                }
                 if (cur.in_dir) {
                     rep->in_seen++;
                 } else {
