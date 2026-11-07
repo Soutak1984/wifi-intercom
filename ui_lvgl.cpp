@@ -50,8 +50,8 @@ static const uint32_t C_TEAL_INK = 0x4E726C;
 static const uint32_t C_CREAM = 0xE6D7C3;
 static const uint32_t C_KEY = 0x2C251E;
 static const uint32_t C_KEY_INK = 0xF6F1E8;
-static const uint32_t C_ST_BG[4] = {0x2C251E, 0x221C17, 0x3A2C18, 0x221C17};
-static const uint32_t C_ST_EDGE[4] = {0x4A3E34, 0x4A3E34, 0xE4A04A, 0x4A3E34};
+static const uint32_t C_ST_BG[4] = {0x2C251E, 0x221C17, 0x221C17, 0x221C17};
+static const uint32_t C_ST_EDGE[4] = {0x4A3E34, 0x4A3E34, 0x4A3E34, 0x4A3E34};
 
 enum {
     SCR_SPLASH = 0,
@@ -560,7 +560,7 @@ static Card make_station(lv_obj_t *parent, int x, int y) {
     lv_obj_set_pos(c.btn, x, y);
     lv_obj_set_size(c.btn, 232, 188);
     plain(c.btn);
-    lv_obj_set_style_radius(c.btn, 12, 0);
+    lv_obj_set_style_radius(c.btn, 18, 0);
     lv_obj_set_style_bg_opa(c.btn, LV_OPA_COVER, 0);
     c.dot = dot_at(c.btn, 20, 22, 10);
     c.tag = label_at(c.btn, 38, 16, &lv_font_montserrat_14, C_GREEN, "ONLINE");
@@ -2557,7 +2557,7 @@ static void build_floor(lv_obj_t *v) {
     int i;
     lv_obj_t *strip;
     for (i = 0; i < 4; i++) {
-        s_floor_card[i] = make_station(v, xs[i], 112);
+        s_floor_card[i] = make_station(v, xs[i], 96);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
     s_fcall = make_btn(v, 24, 308, 300, 96, "Call", "Select a station", on_call, NULL);
