@@ -7,15 +7,13 @@
 #include <string.h>
 
 #include "esp_cache.h"
-#include "esp_heap_caps.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "lvgl.h"
 
-/* Full pages are drawn into the framebuffer the panel is not scanning.
- * panel_7b_draw then points the LCD DMA at that buffer, so the new page
- * appears in one frame. A slider only touches the buffer already on glass,
- * and does not wait for a DMA switch. */
+/* LVGL direct-mode double buffering for the Waveshare RGB panel.
+ * Each buffer is a full 1024x600 framebuffer; the flush callback swaps at
+ * the panel frame boundary and mirrors dirty rectangles to the idle buffer. */
 
 static lv_disp_t *s_disp = nullptr;
 static uint16_t *s_fb0 = nullptr;
