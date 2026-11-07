@@ -51,8 +51,8 @@ static const uint32_t C_TEAL_INK = 0xB9E8EC;
 static const uint32_t C_CREAM = 0xF7F9FC;
 static const uint32_t C_KEY = 0xF4F7FB;
 static const uint32_t C_KEY_INK = 0x122033;
-static const uint32_t C_ST_BG[4] = {0x3A2430, 0x12343C, 0x143228, 0x1A2748};
-static const uint32_t C_ST_EDGE[4] = {0xFF6B6B, 0x3EC8E0, 0x3DDC97, 0x6AA4FF};
+static const uint32_t C_ST_BG[4] = {0xFFF0F2, 0xE6F7F8, 0xE6F7EF, 0xEAF0FF};
+static const uint32_t C_ST_EDGE[4] = {0xF07A89, 0x19A7B5, 0x20B67C, 0x668CEB};
 
 enum {
     SCR_SPLASH = 0,
