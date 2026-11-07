@@ -60,26 +60,33 @@ static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *colo
     }
     if (lv_disp_flush_is_last(drv)) {
         dst = (src == s_fb0) ? s_fb1 : s_fb0;
-        if (!dst) {
+        if (!dst || !s_disp) {
             Serial0.println("lvgl: framebuffer pair missing");
-        } else if (panel_7b_draw(src)) {
-            /* The RGB scanout has moved to src. The other buffer is now safe
-             * to update, and LVGL will use it on the next refresh. */
-            for (i = 0; i < s_disp->inv_p; i++) {
-                const lv_area_t *a = &s_disp->inv_areas[i];
-                int y;
-                int w;
-                if (s_disp->inv_area_joined[i]) continue;
-                w = a->x2 - a->x1 + 1;
-                if (w <= 0 || a->y2 < a->y1) continue;
-                for (y = a->y1; y <= a->y2; y++) {
-                    size_t off = (size_t)y * PANEL_W + a->x1;
-                    memcpy(&dst[off], &src[off], (size_t)w * sizeof(uint16_t));
-                }
-                writeback_area(dst, a);
-            }
         } else {
-            Serial0.println("lvgl: RGB framebuffer switch failed");
+            /* Flush CPU cache for every changed source rectangle before the
+             * RGB bounce-buffer DMA reads the new frame. */
+            for (i = 0; i < s_disp->inv_p; i++) {
+                if (!s_disp->inv_area_joined[i]) writeback_area(src, &s_disp->inv_areas[i]);
+            }
+            if (panel_7b_draw(src)) {
+                /* The RGB scanout has moved to src. The other buffer is now
+                 * safe to update, and LVGL will use it on the next refresh. */
+                for (i = 0; i < s_disp->inv_p; i++) {
+                    const lv_area_t *a = &s_disp->inv_areas[i];
+                    int y;
+                    int w;
+                    if (s_disp->inv_area_joined[i]) continue;
+                    w = a->x2 - a->x1 + 1;
+                    if (w <= 0 || a->y2 < a->y1) continue;
+                    for (y = a->y1; y <= a->y2; y++) {
+                        size_t off = (size_t)y * PANEL_W + a->x1;
+                        memcpy(&dst[off], &src[off], (size_t)w * sizeof(uint16_t));
+                    }
+                    writeback_area(dst, a);
+                }
+            } else {
+                Serial0.println("lvgl: RGB framebuffer switch failed");
+            }
         }
     }
     lv_disp_flush_ready(drv);
