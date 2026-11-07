@@ -50,8 +50,6 @@ static const uint32_t C_TEAL_INK = 0x4E726C;
 static const uint32_t C_CREAM = 0xE6D7C3;
 static const uint32_t C_KEY = 0x2C251E;
 static const uint32_t C_KEY_INK = 0xF6F1E8;
-static const uint32_t C_ST_BG[4] = {0x2C251E, 0x221C17, 0x221C17, 0x221C17};
-static const uint32_t C_ST_EDGE[4] = {0x4A3E34, 0x4A3E34, 0x4A3E34, 0x4A3E34};
 
 enum {
     SCR_SPLASH = 0,
@@ -2014,7 +2012,7 @@ static void paint_power(const Snap *s) {
     int i;
     bool low = s->bat.present && s->bat.percent >= 0 && s->bat.percent < 15;
     int pct = (s->bat.present && s->bat.percent > 0) ? s->bat.percent : 0;
-    int fill = pct * 150 / 100;
+    int fill = pct * 222 / 100;
     if (!s->bat.present) {
         set_text(s_pwr_pct, "USB");
         set_text(s_pwr_volt, "no pack");
