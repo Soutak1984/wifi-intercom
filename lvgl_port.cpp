@@ -12,12 +12,10 @@
 #include "freertos/semphr.h"
 #include "lvgl.h"
 
-/* Every LVGL refresh is composed into the framebuffer that is NOT being
- * scanned. The previous implementation wrote small invalidated rectangles
- * straight into s_shown; RGB DMA could read those pixels mid-write, causing
- * visible tearing/flicker during meters, labels and slider updates. Copy the
- * current page to the back buffer, apply all dirty rectangles there, then
- * switch buffers once the refresh is complete. */
+/* Full pages are drawn into the framebuffer the panel is not scanning.
+ * panel_7b_draw then points the LCD DMA at that buffer, so the new page
+ * appears in one frame. A slider only touches the buffer already on glass,
+ * and does not wait for a DMA switch. */
 
 static lv_color_t *s_partial = nullptr;
 static uint16_t *s_shown = nullptr;
@@ -62,18 +60,26 @@ static void blit_partial(uint16_t *fb, const lv_area_t *area, const lv_color_t *
     }
 }
 
+static bool area_covers_screen(const lv_area_t *area) {
+    return area->x1 <= 0 && area->y1 <= 0 && area->x2 >= PANEL_W - 1 && area->y2 >= PANEL_H - 1;
+}
+
 static void render_start_cb(lv_disp_drv_t *drv) {
-    const size_t frame_bytes = (size_t)PANEL_W * PANEL_H * sizeof(uint16_t);
+    uint16_t i;
     (void)drv;
     s_flip = false;
-    if (!s_disp || !s_off || !s_shown || s_disp->inv_p == 0) {
+    if (!s_disp || !s_off || !s_shown) {
         return;
     }
-    /* Preserve pixels outside LVGL's dirty rectangles before drawing the
-     * changed areas. Both panel framebuffers live in PSRAM. */
-    memcpy(s_off, s_shown, frame_bytes);
-    writeback(s_off, frame_bytes);
-    s_flip = true;
+    for (i = 0; i < s_disp->inv_p; i++) {
+        if (s_disp->inv_area_joined[i]) {
+            continue;
+        }
+        if (area_covers_screen(&s_disp->inv_areas[i])) {
+            s_flip = true;
+            return;
+        }
+    }
 }
 
 static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
