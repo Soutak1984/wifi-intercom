@@ -2486,29 +2486,47 @@ static void build_home(lv_obj_t *v) {
 }
 
 static void build_floor(lv_obj_t *v) {
-    static const int xs[] = {24, 268, 512, 756};
     int i;
+    static const int xs[] = {28, 306};
+    static const int ys[] = {142, 294};
+    lv_obj_t *panel;
     lv_obj_t *strip;
+    label_at(v, 28, 88, &lv_font_montserrat_32, C_TEXT, "Room controls");
+    label_at(v, 30, 126, &lv_font_montserrat_16, C_MUTED,
+             "Select a room, then choose a communication action.");
+
     for (i = 0; i < 4; i++) {
-        s_floor_card[i] = make_station(v, xs[i], 96);
+        s_floor_card[i] = make_station_tile(v, xs[i & 1], ys[i >> 1], 258, 138);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_fcall = make_btn(v, 24, 308, 300, 96, "Call", "Select a station", on_call, NULL);
-    s_fmic = make_btn(v, 340, 308, 220, 96, "Mic", "Off", on_mic, NULL);
-    s_fpage = make_btn(v, 576, 308, 210, 96, "Page", "Reception only", on_page, NULL);
-    s_fend = make_btn(v, 802, 308, 198, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
-    s_floor_title = label_at(strip, 24, 28, &lv_font_montserrat_22, C_AMBER, "Microphone off");
+
+    panel = card_at(v, 592, 88, 404, 344, 0xE7F0FA, 22);
+    label_at(panel, 22, 20, &lv_font_montserrat_14, C_TEAL, "COMMUNICATION");
     {
-        lv_obj_t *hint = label_at(strip, 24, 64, &lv_font_montserrat_16, C_MUTED,
-                                  "Nothing is sent until a call is connected. The armed latch clears on hangup.");
-        clip_label(hint, 580);
-        hint = label_at(strip, 24, 96, &lv_font_montserrat_16, C_MUTED,
-                        "Page stays locked here. Setup opens levels and Wi-Fi.");
-        clip_label(hint, 580);
+        Btn b = make_btn(panel, 20, 58, 364, 76, "Call room", "Private two-way call", on_call, NULL);
+        tone(&b, T_AMBER);
+        s_fcall = b;
     }
-    s_floor_bat = label_at(strip, 636, 62, &lv_font_montserrat_16, C_TEXT, "USB");
-    make_btn(strip, 836, 48, 116, 64, "Setup", "", on_setup, NULL);
+    {
+        Btn b = make_btn(panel, 20, 146, 172, 76, "Talk / mute", "Microphone control", on_mic, NULL);
+        tone(&b, T_TEAL);
+        s_fmic = b;
+    }
+    {
+        Btn b = make_btn(panel, 212, 146, 172, 76, "Page", "Reception only", on_page, NULL);
+        s_fpage = b;
+    }
+    {
+        Btn b = make_btn(panel, 20, 234, 364, 76, "End session", "Hang up / stop paging", on_end, NULL);
+        tone(&b, T_RED);
+        s_fend = b;
+    }
+
+    strip = card_at(v, 28, 460, 968, 116, C_SURF, 20);
+    s_floor_title = label_at(strip, 22, 18, &lv_font_montserrat_22, C_AMBER, "Microphone off");
+    label_at(strip, 22, 56, &lv_font_montserrat_14, C_MUTED,
+             "Microphone is only transmitted during an active call.");
+    s_floor_bat = label_at(strip, 720, 42, &lv_font_montserrat_20, C_TEXT, "USB");
 }
 
 static lv_obj_t *ring_at(lv_obj_t *parent, int r) {
