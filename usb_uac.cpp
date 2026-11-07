@@ -1041,16 +1041,28 @@ static bool claim_iface(const stream_cfg *st, bool *claimed) {
     return true;
 }
 
-static bool select_alt(const stream_cfg *st) {
-    esp_err_t err = set_interface(st->iface, st->alt);
+static bool set_alt(uint8_t iface, uint8_t alt) {
+    esp_err_t err = set_interface(iface, alt);
     Serial0.printf("usb: SET_INTERFACE %u alt %u %s\n",
-                   (unsigned)st->iface, (unsigned)st->alt,
+                   (unsigned)iface, (unsigned)alt,
                    err == ESP_OK ? "ok" : esp_err_to_name(err));
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "SET_INTERFACE %u alt %u: %s", st->iface, st->alt, esp_err_to_name(err));
+        ESP_LOGE(TAG, "SET_INTERFACE %u alt %u: %s", iface, alt, esp_err_to_name(err));
         return false;
     }
+    /* GHW-123P (0020:0b21) produces no microphone data unless each
+     * alternate change is followed by this wait. */
+    vTaskDelay(pdMS_TO_TICKS(50));
     return true;
+}
+
+/* UAC1 powers up on alternate 0, which has no endpoint. Select that
+ * first, then the streaming alternate. */
+static bool select_alt(const stream_cfg *st) {
+    if (st->alt != 0 && !set_alt(st->iface, 0)) {
+        return false;
+    }
+    return set_alt(st->iface, st->alt);
 }
 
 static bool same_alt(void) {
@@ -1289,6 +1301,9 @@ static void handle_new(uint8_t addr) {
     copy_stream(&s_in, &in_alt);
     copy_stream(&s_out, &out_alt);
     Serial0.printf("usb: adapter %04x:%04x\n", dd->idVendor, dd->idProduct);
+    if (dd->idVendor == 0x0020 && dd->idProduct == 0x0b21) {
+        Serial0.println("usb: GHW-123P");
+    }
     {
         int note_i;
         for (note_i = 0; note_i < s_nnotes; note_i++) {

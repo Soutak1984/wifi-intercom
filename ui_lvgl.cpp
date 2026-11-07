@@ -15,36 +15,42 @@
 #include <string.h>
 
 #include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/task.h"
 
 /* One LVGL view per frame in design/screens, including 15-wifi.svg.
  * The shared key and the web PIN are not on this panel. */
 
 static const char *TAG = "ic_lvgl";
 
-static const uint32_t C_BG = 0x14110E;
-static const uint32_t C_BAR = 0x100E0C;
-static const uint32_t C_SURF = 0x221C17;
-static const uint32_t C_SURF2 = 0x2C251E;
-static const uint32_t C_LINE = 0x4A3E34;
-static const uint32_t C_TEXT = 0xF6F1E8;
-static const uint32_t C_MUTED = 0xA89888;
-static const uint32_t C_AMBER = 0xE4A04A;
-static const uint32_t C_INK = 0x2A1C0A;
-static const uint32_t C_GREEN = 0x8FB573;
-static const uint32_t C_RED = 0xD4654E;
-static const uint32_t C_TEAL = 0x7EAEA4;
-static const uint32_t C_PRESS = 0x3A312A;
-static const uint32_t C_TEAL_BG = 0x1C2C2A;
-static const uint32_t C_CALL_BG = 0x243024;
-static const uint32_t C_WARM = 0x3A2C18;
-static const uint32_t C_ALERT = 0x3A221C;
-static const uint32_t C_INK_RED = 0x2A100C;
-static const uint32_t C_SUB_RED = 0x6A2E24;
-static const uint32_t C_SUB_AMBER = 0x6A4A16;
-static const uint32_t C_OFF = 0x6A5C50;
-static const uint32_t C_DIM = 0x5A4E44;
-static const uint32_t C_TEAL_INK = 0x4E726C;
-static const uint32_t C_CREAM = 0xE6D7C3;
+static const uint32_t C_BG = 0x0E1628;
+static const uint32_t C_BAR = 0x121E36;
+static const uint32_t C_SURF = 0x1A2A4A;
+static const uint32_t C_SURF2 = 0x24385F;
+static const uint32_t C_LINE = 0x3E5A8A;
+static const uint32_t C_TEXT = 0xF5F8FC;
+static const uint32_t C_MUTED = 0xA9B8D0;
+static const uint32_t C_AMBER = 0xFFB020;
+static const uint32_t C_INK = 0x1A1204;
+static const uint32_t C_GREEN = 0x3DDC97;
+static const uint32_t C_RED = 0xFF5D73;
+static const uint32_t C_TEAL = 0x3EC8E0;
+static const uint32_t C_PRESS = 0x2C4A78;
+static const uint32_t C_TEAL_BG = 0x12343C;
+static const uint32_t C_CALL_BG = 0x143228;
+static const uint32_t C_WARM = 0x3A2A12;
+static const uint32_t C_ALERT = 0x3A1824;
+static const uint32_t C_INK_RED = 0x2A0C12;
+static const uint32_t C_SUB_RED = 0x7A3040;
+static const uint32_t C_SUB_AMBER = 0x7A5410;
+static const uint32_t C_OFF = 0x6E7E98;
+static const uint32_t C_DIM = 0x5A6A84;
+static const uint32_t C_TEAL_INK = 0x1A6070;
+static const uint32_t C_CREAM = 0xE7EEF8;
+static const uint32_t C_KEY = 0xF4F7FB;
+static const uint32_t C_KEY_INK = 0x122033;
+static const uint32_t C_ST_BG[4] = {0x3A2430, 0x12343C, 0x143228, 0x1A2748};
+static const uint32_t C_ST_EDGE[4] = {0xFF6B6B, 0x3EC8E0, 0x3DDC97, 0x6AA4FF};
 
 enum {
     SCR_SPLASH = 0,
@@ -62,10 +68,12 @@ enum {
     SCR_SETUP,
     SCR_POWER,
     SCR_WIFI,
+    SCR_NET,
     SCR_COUNT
 };
 
-enum { NAV_AUTO = 0, NAV_SETUP, NAV_POWER, NAV_WIFI };
+enum { NAV_AUTO = 0, NAV_SETUP, NAV_POWER, NAV_WIFI, NAV_NET };
+enum { NET_NAME = 0, NET_IP, NET_GW, NET_MASK, NET_P0, NET_P1, NET_P2, NET_P3, NET_N };
 enum { T_SURFACE = 0, T_AMBER, T_RED, T_LOCKED, T_DISABLED, T_DIM, T_TEAL };
 
 struct Snap {
@@ -148,7 +156,13 @@ static bool s_have = false;
 static bool s_on_app = false;
 static bool s_quiet = false;
 static bool s_wifi_filled = false;
+static bool s_net_filled = false;
 static bool s_pass_hide = false;
+static int s_edit_sid = IC_STATION_MIN;
+static int s_net_active = -1;
+static int s_net_paint_active = -2;
+static int s_net_paint_sid = -1;
+static char s_net_draft[NET_N][40];
 static int s_nav = NAV_AUTO;
 static int s_cur = -1;
 static uint32_t s_t0 = 0;
@@ -265,6 +279,12 @@ static lv_obj_t *s_pass_ta;
 static lv_obj_t *s_kb;
 static lv_obj_t *s_wifi_err;
 static lv_obj_t *s_hide_lbl;
+static lv_obj_t *s_net_ta;
+static lv_obj_t *s_net_kb;
+static lv_obj_t *s_net_cap;
+static lv_obj_t *s_net_err;
+static Btn s_net_field[NET_N];
+static Btn s_net_sid[4];
 
 static void set_text(lv_obj_t *lb, const char *text) {
     const char *cur;
@@ -725,12 +745,21 @@ static void on_wifi_nav(lv_event_t *e) {
     s_nav = NAV_WIFI;
 }
 
+static void on_net_nav(lv_event_t *e) {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    s_nav = NAV_NET;
+}
+
 static void on_back_setup(lv_event_t *e) {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
         return;
     }
     s_nav = NAV_SETUP;
     s_wifi_filled = false;
+    s_net_filled = false;
+    s_net_active = -1;
 }
 
 static void on_back_home(lv_event_t *e) {
@@ -839,6 +868,33 @@ static void on_gain(lv_event_t *e) {
     }
 }
 
+static void style_keyboard(lv_obj_t *kb) {
+    if (!kb) {
+        return;
+    }
+    lv_obj_set_style_bg_color(kb, lv_color_hex(0x0B1220), 0);
+    lv_obj_set_style_bg_opa(kb, LV_OPA_COVER, 0);
+    lv_obj_set_style_pad_all(kb, 6, 0);
+    lv_obj_set_style_pad_row(kb, 4, 0);
+    lv_obj_set_style_pad_column(kb, 4, 0);
+    lv_obj_set_style_radius(kb, 0, 0);
+    lv_obj_set_style_border_width(kb, 0, 0);
+    lv_obj_set_style_bg_color(kb, lv_color_hex(C_KEY), LV_PART_ITEMS);
+    lv_obj_set_style_bg_opa(kb, LV_OPA_COVER, LV_PART_ITEMS);
+    lv_obj_set_style_text_color(kb, lv_color_hex(C_KEY_INK), LV_PART_ITEMS);
+    lv_obj_set_style_text_font(kb, &lv_font_montserrat_20, LV_PART_ITEMS);
+    lv_obj_set_style_radius(kb, 10, LV_PART_ITEMS);
+    lv_obj_set_style_border_width(kb, 0, LV_PART_ITEMS);
+    lv_obj_set_style_pad_all(kb, 2, LV_PART_ITEMS);
+    lv_obj_set_style_bg_color(kb, lv_color_hex(0xD5E2F4),
+                             (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_PRESSED));
+    lv_obj_set_style_bg_color(kb, lv_color_hex(C_AMBER),
+                             (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_CHECKED));
+    lv_obj_set_style_text_color(kb, lv_color_hex(C_INK),
+                               (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_CHECKED));
+    lv_keyboard_set_popovers(kb, true);
+}
+
 static void style_ta(lv_obj_t *ta) {
     lv_obj_set_style_bg_color(ta, lv_color_hex(C_SURF2), 0);
     lv_obj_set_style_bg_opa(ta, LV_OPA_COVER, 0);
@@ -918,11 +974,222 @@ static void on_hide(lv_event_t *e) {
     set_text(s_hide_lbl, s_pass_hide ? "Show" : "Hide");
 }
 
+static const char *const k_net_title[NET_N] = {
+    "Name", "IP", "Gateway", "Mask", "100", "101", "102", "103"
+};
+static const char *const k_net_cap[NET_N] = {
+    "Station name", "This station IP", "Gateway", "Netmask",
+    "Station 100 IP", "Station 101 IP", "Station 102 IP", "Station 103 IP"
+};
+static const char *const k_role[4] = {"Reception", "Floor 1", "Floor 2", "Floor 3"};
+
+static void net_error(const char *text, uint32_t color) {
+    set_text(s_net_err, text ? text : "");
+    if (s_net_err) {
+        lv_obj_set_style_text_color(s_net_err, lv_color_hex(color), 0);
+    }
+}
+
+static void store_active_field(void) {
+    const char *text;
+    if (!s_net_ta || s_net_active < 0 || s_net_active >= NET_N) {
+        return;
+    }
+    text = lv_textarea_get_text(s_net_ta);
+    snprintf(s_net_draft[s_net_active], sizeof(s_net_draft[0]), "%s", text ? text : "");
+}
+
+static void restyle_net(void) {
+    int i;
+    for (i = 0; i < NET_N; i++) {
+        tone(&s_net_field[i], i == s_net_active ? T_AMBER : T_SURFACE);
+        relabel(&s_net_field[i], k_net_title[i], s_net_draft[i]);
+    }
+    for (i = 0; i < 4; i++) {
+        tone(&s_net_sid[i], (IC_STATION_MIN + i) == s_edit_sid ? T_AMBER : T_TEAL);
+        relabel(&s_net_sid[i], k_net_title[NET_P0 + i], k_role[i]);
+    }
+    s_net_paint_active = s_net_active;
+    s_net_paint_sid = s_edit_sid;
+}
+
+static void show_net_field(int idx) {
+    store_active_field();
+    if (idx < 0 || idx >= NET_N) {
+        idx = NET_NAME;
+    }
+    s_net_active = idx;
+    if (s_net_ta) {
+        lv_textarea_set_accepted_chars(s_net_ta, idx == NET_NAME ? NULL : "0123456789.");
+        lv_textarea_set_max_length(s_net_ta, idx == NET_NAME ? (IC_NAME_LEN - 1) : 15);
+        lv_textarea_set_text(s_net_ta, s_net_draft[idx]);
+        lv_obj_set_style_border_color(s_net_ta, lv_color_hex(C_AMBER), 0);
+    }
+    set_text(s_net_cap, k_net_cap[idx]);
+    if (s_net_kb && s_net_ta) {
+        lv_keyboard_set_mode(s_net_kb, idx == NET_NAME ? LV_KEYBOARD_MODE_TEXT_LOWER : LV_KEYBOARD_MODE_NUMBER);
+        lv_keyboard_set_textarea(s_net_kb, s_net_ta);
+    }
+    restyle_net();
+}
+
+static void net_commit(void);
+
+static void on_net_field(lv_event_t *e) {
+    int idx;
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    idx = (int)(intptr_t)lv_event_get_user_data(e);
+    show_net_field(idx);
+}
+
+static void on_net_sid(lv_event_t *e) {
+    int id;
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    id = (int)(intptr_t)lv_event_get_user_data(e);
+    if (id < IC_STATION_MIN || id > IC_STATION_MAX) {
+        return;
+    }
+    s_edit_sid = id;
+    restyle_net();
+}
+
+static void on_net_save(lv_event_t *e) {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    net_commit();
+}
+
+static void net_commit(void) {
+    ic_config_t copy;
+    uint32_t ip = 0;
+    uint32_t gw = 0;
+    uint32_t mask = 0;
+    uint32_t peer[4];
+    int i;
+    store_active_field();
+    if (s_edit_sid < IC_STATION_MIN || s_edit_sid > IC_STATION_MAX) {
+        net_error("Station must be 100 to 103.", C_RED);
+        return;
+    }
+    if (!ic_config_name_ok(s_net_draft[NET_NAME])) {
+        net_error("Name must be 1 to 15 characters.", C_RED);
+        show_net_field(NET_NAME);
+        return;
+    }
+    if (!ic_parse_ip(s_net_draft[NET_IP], &ip) || ip == 0) {
+        net_error("IP must look like 192.168.1.101.", C_RED);
+        show_net_field(NET_IP);
+        return;
+    }
+    if (!ic_parse_ip(s_net_draft[NET_GW], &gw)) {
+        net_error("Gateway must be four numbers.", C_RED);
+        show_net_field(NET_GW);
+        return;
+    }
+    if (!ic_parse_ip(s_net_draft[NET_MASK], &mask) || ((mask >> 24) & 255u) != 255u) {
+        net_error("Netmask must start with 255.", C_RED);
+        show_net_field(NET_MASK);
+        return;
+    }
+    for (i = 0; i < 4; i++) {
+        if (!ic_parse_ip(s_net_draft[NET_P0 + i], &peer[i]) || peer[i] == 0) {
+            net_error("Each station needs an IP.", C_RED);
+            show_net_field(NET_P0 + i);
+            return;
+        }
+    }
+    peer[s_edit_sid - IC_STATION_MIN] = ip;
+    if (!g_app.lock) {
+        return;
+    }
+    app_lock();
+    copy = g_app.cfg;
+    app_unlock();
+    copy.station_id = (uint16_t)s_edit_sid;
+    snprintf(copy.name, sizeof(copy.name), "%s", s_net_draft[NET_NAME]);
+    copy.ip = ip;
+    copy.gateway = gw;
+    copy.netmask = mask;
+    for (i = 0; i < 4; i++) {
+        copy.peer_ip[i] = peer[i];
+    }
+    if (!ic_config_save(&copy)) {
+        net_error("Could not save.", C_RED);
+        return;
+    }
+    app_lock();
+    g_app.cfg = copy;
+    app_unlock();
+    net_error("Saved. Rebooting.", C_GREEN);
+    lv_refr_now(NULL);
+    vTaskDelay(pdMS_TO_TICKS(400));
+    esp_restart();
+}
+
+static void enter_net(void) {
+    ic_config_t copy;
+    char name[IC_NAME_LEN + 1];
+    int i;
+    if (s_net_filled || !s_net_ta || !g_app.lock) {
+        return;
+    }
+    app_lock();
+    copy = g_app.cfg;
+    app_unlock();
+    s_edit_sid = (int)copy.station_id;
+    if (s_edit_sid < IC_STATION_MIN || s_edit_sid > IC_STATION_MAX) {
+        s_edit_sid = IC_STATION_MIN;
+    }
+    name_of(copy.name, name, sizeof(name));
+    snprintf(s_net_draft[NET_NAME], sizeof(s_net_draft[0]), "%s", name);
+    ic_format_ip(copy.ip, s_net_draft[NET_IP], sizeof(s_net_draft[0]));
+    ic_format_ip(copy.gateway, s_net_draft[NET_GW], sizeof(s_net_draft[0]));
+    ic_format_ip(copy.netmask, s_net_draft[NET_MASK], sizeof(s_net_draft[0]));
+    for (i = 0; i < 4; i++) {
+        ic_format_ip(copy.peer_ip[i], s_net_draft[NET_P0 + i], sizeof(s_net_draft[0]));
+    }
+    s_net_active = -1;
+    s_net_filled = true;
+    net_error("Key and PIN stay on the web page.", C_MUTED);
+    show_net_field(NET_NAME);
+}
+
+static void paint_net(void) {
+    int i;
+    store_active_field();
+    for (i = 0; i < NET_N; i++) {
+        relabel(&s_net_field[i], k_net_title[i], s_net_draft[i]);
+    }
+    if (s_net_paint_active != s_net_active || s_net_paint_sid != s_edit_sid) {
+        restyle_net();
+    }
+}
+
 static void on_ta(lv_event_t *e) {
     lv_obj_t *ta = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *other;
-    if (!s_kb || !ta) {
+    if (!ta) {
+        return;
+    }
+    if (ta == s_net_ta) {
+        if ((code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) && s_net_kb) {
+            lv_keyboard_set_textarea(s_net_kb, ta);
+        } else if (code == LV_EVENT_READY) {
+            if (s_net_active + 1 < NET_N) {
+                show_net_field(s_net_active + 1);
+            } else {
+                net_commit();
+            }
+        }
+        return;
+    }
+    if (!s_kb) {
         return;
     }
     other = (ta == s_ssid_ta) ? s_pass_ta : s_ssid_ta;
@@ -1210,8 +1477,14 @@ static void paint_dir_card(Card *c, const Snap *s, int index) {
     p = &s->view.dir[index];
     self = p->id == s->view.self_id;
     sel = !self && p->id != 0 && p->id == s->view.selected;
-    bg = sel ? C_WARM : (self ? C_SURF2 : C_SURF);
-    border = sel ? C_AMBER : C_LINE;
+    bg = (index >= 0 && index < 4) ? C_ST_BG[index] : C_SURF;
+    border = (index >= 0 && index < 4) ? C_ST_EDGE[index] : C_LINE;
+    if (sel) {
+        bg = C_WARM;
+        border = C_AMBER;
+    } else if (self) {
+        border = C_GREEN;
+    }
     tag = "OFFLINE";
     tagc = C_OFF;
     peer_name(s, index, nb, sizeof(nb));
@@ -1230,7 +1503,7 @@ static void paint_dir_card(Card *c, const Snap *s, int index) {
     if (c->btn) {
         lv_obj_set_style_bg_color(c->btn, lv_color_hex(bg), 0);
         lv_obj_set_style_bg_color(c->btn, lv_color_hex(C_PRESS), LV_STATE_PRESSED);
-        stroke(c->btn, border, sel ? 3 : 1);
+        stroke(c->btn, border, sel ? 3 : 2);
     }
     if (c->dot) {
         lv_obj_set_style_bg_color(c->dot, lv_color_hex(tagc), 0);
@@ -1791,6 +2064,13 @@ static void show_screen(int screen) {
             lv_textarea_set_text(s_pass_ta, "");
         }
     }
+    if (screen == SCR_NET && prev != SCR_NET) {
+        enter_net();
+    }
+    if (screen != SCR_NET && prev == SCR_NET) {
+        s_net_filled = false;
+        s_net_active = -1;
+    }
     s_cur = screen;
 }
 
@@ -1815,6 +2095,9 @@ static int pick_screen(const Snap *s) {
     }
     if (s_nav == NAV_WIFI) {
         return SCR_WIFI;
+    }
+    if (s_nav == NAV_NET) {
+        return SCR_NET;
     }
     if (s_nav == NAV_SETUP) {
         return SCR_SETUP;
@@ -1930,6 +2213,8 @@ static void apply_snap(const Snap *s, int screen, uint32_t now) {
         paint_setup(s);
     } else if (screen == SCR_POWER) {
         paint_power(s);
+    } else if (screen == SCR_NET) {
+        paint_net();
     }
 }
 
@@ -2047,10 +2332,10 @@ static void build_bar(void) {
         lv_obj_set_style_bg_opa(mark, LV_OPA_COVER, 0);
         lv_obj_set_style_radius(mark, 2, 0);
         lv_obj_clear_flag(mark, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_pos(line, 0, 71);
-        lv_obj_set_size(line, PANEL_W, 1);
+        lv_obj_set_pos(line, 0, 69);
+        lv_obj_set_size(line, PANEL_W, 3);
         plain(line);
-        lv_obj_set_style_bg_color(line, lv_color_hex(C_LINE), 0);
+        lv_obj_set_style_bg_color(line, lv_color_hex(C_TEAL), 0);
         lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
         lv_obj_set_style_radius(line, 0, 0);
         lv_obj_clear_flag(line, LV_OBJ_FLAG_CLICKABLE);
@@ -2367,7 +2652,11 @@ static void build_link(lv_obj_t *v) {
     label_at(foot, 24, 10, &lv_font_montserrat_16, C_TEXT, "Battery is separate from the radio.");
     s_link_foot = label_at(foot, 24, 36, &lv_font_montserrat_14, C_MUTED, "");
     clip_label(s_link_foot, 630);
-    make_btn(v, 720, 506, 280, 70, "Set Wi-Fi", "Keyboard", on_wifi_nav, NULL);
+    make_btn(v, 720, 506, 136, 70, "Wi-Fi", "Keyboard", on_wifi_nav, NULL);
+    {
+        Btn netb = make_btn(v, 864, 506, 136, 70, "Station", "IP", on_net_nav, NULL);
+        tone(&netb, T_AMBER);
+    }
 }
 
 static void build_audio(lv_obj_t *v) {
@@ -2418,8 +2707,12 @@ static void build_setup(lv_obj_t *v) {
     label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
     s_setup_meter = meter_bar(v, 52, 396, 540, 16, C_TEAL);
     label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
-    make_btn(v, 52, 478, 250, 72, "Audio test", "Idle tone, not sent", on_test, NULL);
-    make_btn(v, 318, 478, 250, 72, "Power", "Wi-Fi and battery", on_power, NULL);
+    make_btn(v, 52, 478, 170, 72, "Audio test", "Local tone", on_test, NULL);
+    {
+        Btn netb = make_btn(v, 234, 478, 180, 72, "Station", "Name and IP", on_net_nav, NULL);
+        tone(&netb, T_AMBER);
+    }
+    make_btn(v, 426, 478, 170, 72, "Power", "Battery", on_power, NULL);
     card_at(v, 664, 92, 336, 300, C_SURF, 20);
     label_at(v, 688, 116, &lv_font_montserrat_14, C_AMBER, "THIS STATION");
     s_id_name = label_at(v, 688, 148, &lv_font_montserrat_28, C_TEXT, "");
@@ -2428,7 +2721,7 @@ static void build_setup(lv_obj_t *v) {
     s_id_ip = label_at(v, 688, 226, &lv_font_montserrat_20, C_TEXT, "");
     s_id_gw = label_at(v, 688, 264, &lv_font_montserrat_16, C_MUTED, "");
     s_id_mask = label_at(v, 688, 292, &lv_font_montserrat_16, C_MUTED, "");
-    label_at(v, 688, 332, &lv_font_montserrat_14, C_MUTED, "Key and PIN stay on the web page.");
+    label_at(v, 688, 332, &lv_font_montserrat_14, C_MUTED, "Edit station for the name and IP.");
     back = make_btn(v, 860, 108, 116, 40, "Back", "", on_back_home, NULL);
     lv_obj_set_style_text_font(back.title, &lv_font_montserrat_16, 0);
     s_warn = card_at(v, 664, 408, 336, 168, C_WARM, 20);
@@ -2483,7 +2776,11 @@ static void build_power(lv_obj_t *v) {
     s_pwr_pass = label_at(v, 538, 248, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_pwr_pass, 430);
     label_at(v, 538, 286, &lv_font_montserrat_14, C_MUTED, "2.4 GHz only. Client isolation must be off.");
-    make_btn(v, 538, 344, 240, 52, "Set Wi-Fi", "Type the name", on_wifi_nav, NULL);
+    make_btn(v, 538, 344, 210, 52, "Wi-Fi", "Keyboard", on_wifi_nav, NULL);
+    {
+        Btn netb = make_btn(v, 760, 344, 210, 52, "Station", "Name and IP", on_net_nav, NULL);
+        tone(&netb, T_AMBER);
+    }
     bat = card_at(v, 24, 428, 976, 148, C_SURF, 18);
     (void)bat;
     for (i = 0; i < 4; i++) {
@@ -2497,53 +2794,77 @@ static void build_power(lv_obj_t *v) {
 static void build_wifi(lv_obj_t *v) {
     Btn hide;
     Btn save;
-    label_at(v, 48, 76, &lv_font_montserrat_36, C_TEXT, "Wi-Fi");
-    label_at(v, 48, 122, &lv_font_montserrat_16, C_MUTED,
-             "The password stays visible while you type. Empty password means an open network.");
-    label_at(v, 48, 156, &lv_font_montserrat_14, C_MUTED, "NETWORK NAME");
+    label_at(v, 48, 78, &lv_font_montserrat_36, C_TEXT, "Wi-Fi");
+    label_at(v, 220, 92, &lv_font_montserrat_16, C_MUTED,
+             "Tap a box. Empty password means an open network.");
+    label_at(v, 48, 128, &lv_font_montserrat_14, C_TEAL, "NETWORK NAME");
     s_ssid_ta = lv_textarea_create(v);
-    lv_obj_set_pos(s_ssid_ta, 48, 184);
-    lv_obj_set_size(s_ssid_ta, 928, 52);
+    lv_obj_set_pos(s_ssid_ta, 48, 150);
+    lv_obj_set_size(s_ssid_ta, 928, 48);
     style_ta(s_ssid_ta);
     lv_textarea_set_one_line(s_ssid_ta, true);
     lv_textarea_set_max_length(s_ssid_ta, 32);
     lv_textarea_set_placeholder_text(s_ssid_ta, "SSID");
     lv_obj_add_event_cb(s_ssid_ta, on_ta, LV_EVENT_ALL, NULL);
-    label_at(v, 48, 246, &lv_font_montserrat_14, C_MUTED, "PASSWORD");
+    label_at(v, 48, 206, &lv_font_montserrat_14, C_TEAL, "PASSWORD");
     s_pass_ta = lv_textarea_create(v);
-    lv_obj_set_pos(s_pass_ta, 48, 274);
-    lv_obj_set_size(s_pass_ta, 760, 52);
+    lv_obj_set_pos(s_pass_ta, 48, 228);
+    lv_obj_set_size(s_pass_ta, 760, 48);
     style_ta(s_pass_ta);
     lv_textarea_set_one_line(s_pass_ta, true);
     lv_textarea_set_max_length(s_pass_ta, 63);
     lv_textarea_set_placeholder_text(s_pass_ta, "Password");
     lv_obj_add_event_cb(s_pass_ta, on_ta, LV_EVENT_ALL, NULL);
-    hide = make_btn(v, 824, 274, 152, 52, "Hide", "", on_hide, NULL);
+    hide = make_btn(v, 824, 228, 152, 48, "Hide", "", on_hide, NULL);
     s_hide_lbl = hide.title;
-    s_wifi_err = label_at(v, 48, 332, &lv_font_montserrat_16, C_MUTED, "");
+    s_wifi_err = label_at(v, 48, 286, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_wifi_err, 490);
-    save = make_btn(v, 560, 328, 200, 52, "Save", "", on_wifi_save, NULL);
+    save = make_btn(v, 560, 278, 200, 48, "Save", "", on_wifi_save, NULL);
     tone(&save, T_AMBER);
-    make_btn(v, 776, 328, 200, 52, "Back", "", on_back_setup, NULL);
+    make_btn(v, 776, 278, 200, 48, "Back", "", on_back_setup, NULL);
     s_kb = lv_keyboard_create(v);
-    lv_obj_set_pos(s_kb, 0, 392);
-    lv_obj_set_size(s_kb, PANEL_W, 208);
-    lv_obj_set_style_bg_color(s_kb, lv_color_hex(C_BAR), 0);
-    lv_obj_set_style_bg_opa(s_kb, LV_OPA_COVER, 0);
-    lv_obj_set_style_bg_color(s_kb, lv_color_hex(C_SURF2), LV_PART_ITEMS);
-    lv_obj_set_style_bg_color(s_kb, lv_color_hex(C_PRESS),
-                             (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_PRESSED));
-    lv_obj_set_style_bg_color(s_kb, lv_color_hex(C_AMBER),
-                             (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_CHECKED));
-    lv_obj_set_style_text_color(s_kb, lv_color_hex(C_TEXT), LV_PART_ITEMS);
-    lv_obj_set_style_text_color(s_kb, lv_color_hex(C_INK),
-                               (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_CHECKED));
-    lv_obj_set_style_text_font(s_kb, &lv_font_montserrat_16, LV_PART_ITEMS);
-    lv_obj_set_style_radius(s_kb, 8, LV_PART_ITEMS);
-    lv_obj_set_style_border_width(s_kb, 0, LV_PART_ITEMS);
-    lv_obj_set_style_pad_row(s_kb, 4, 0);
-    lv_obj_set_style_pad_column(s_kb, 4, 0);
+    lv_obj_set_pos(s_kb, 0, 340);
+    lv_obj_set_size(s_kb, PANEL_W, 260);
+    style_keyboard(s_kb);
+    lv_keyboard_set_mode(s_kb, LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(s_kb, s_ssid_ta);
+    lv_obj_move_foreground(s_kb);
+}
+
+static void build_net(lv_obj_t *v) {
+    Btn save;
+    int i;
+    static const int xs[] = {24, 271, 518, 765};
+    label_at(v, 24, 78, &lv_font_montserrat_32, C_TEXT, "Station");
+    save = make_btn(v, 620, 74, 180, 48, "Save", "", on_net_save, NULL);
+    tone(&save, T_AMBER);
+    make_btn(v, 816, 74, 180, 48, "Back", "", on_back_setup, NULL);
+    for (i = 0; i < 4; i++) {
+        s_net_sid[i] = make_btn(v, xs[i], 132, 230, 52, k_net_title[NET_P0 + i], k_role[i], on_net_sid,
+                                (void *)(intptr_t)(IC_STATION_MIN + i));
+    }
+    for (i = 0; i < NET_N; i++) {
+        int col = i % 4;
+        int row = i / 4;
+        s_net_field[i] = make_btn(v, xs[col], 196 + row * 64, 230, 56, k_net_title[i], "", on_net_field,
+                                  (void *)(intptr_t)i);
+    }
+    s_net_cap = label_at(v, 24, 330, &lv_font_montserrat_14, C_TEAL, "Station name");
+    s_net_ta = lv_textarea_create(v);
+    lv_obj_set_pos(s_net_ta, 24, 350);
+    lv_obj_set_size(s_net_ta, 640, 44);
+    style_ta(s_net_ta);
+    lv_textarea_set_one_line(s_net_ta, true);
+    lv_textarea_set_max_length(s_net_ta, IC_NAME_LEN - 1);
+    lv_obj_add_event_cb(s_net_ta, on_ta, LV_EVENT_ALL, NULL);
+    s_net_err = label_at(v, 680, 360, &lv_font_montserrat_14, C_MUTED, "");
+    clip_label(s_net_err, 320);
+    s_net_kb = lv_keyboard_create(v);
+    lv_obj_set_pos(s_net_kb, 0, 408);
+    lv_obj_set_size(s_net_kb, PANEL_W, 192);
+    style_keyboard(s_net_kb);
+    lv_keyboard_set_textarea(s_net_kb, s_net_ta);
+    lv_obj_move_foreground(s_net_kb);
 }
 
 static void build_splash(void) {
@@ -2619,6 +2940,7 @@ void ui_lvgl_build(void) {
     build_setup(s_views[SCR_SETUP]);
     build_power(s_views[SCR_POWER]);
     build_wifi(s_views[SCR_WIFI]);
+    build_net(s_views[SCR_NET]);
     build_bar();
     lv_scr_load(s_splash_scr);
     s_on_app = false;
