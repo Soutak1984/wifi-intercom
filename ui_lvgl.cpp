@@ -24,34 +24,34 @@
 
 static const char *TAG = "ic_lvgl";
 
-static const uint32_t C_BG = 0xF3F6FA;
-static const uint32_t C_BAR = 0xFFFFFF;
-static const uint32_t C_SURF = 0xFFFFFF;
-static const uint32_t C_SURF2 = 0xEAF0F7;
-static const uint32_t C_LINE = 0xD9E2EC;
-static const uint32_t C_TEXT = 0x18263A;
-static const uint32_t C_MUTED = 0x65758B;
-static const uint32_t C_AMBER = 0x315BD6;
-static const uint32_t C_INK = 0xFFFFFF;
-static const uint32_t C_GREEN = 0x169B72;
-static const uint32_t C_RED = 0xD94D5B;
-static const uint32_t C_TEAL = 0x2585A6;
-static const uint32_t C_PRESS = 0xDCE7F7;
-static const uint32_t C_TEAL_BG = 0xE6F3F7;
-static const uint32_t C_CALL_BG = 0xE5F5EE;
-static const uint32_t C_WARM = 0xFFF2D8;
-static const uint32_t C_ALERT = 0xFCECEF;
-static const uint32_t C_INK_RED = 0xFFFFFF;
-static const uint32_t C_SUB_RED = 0xFFFFFF;
-static const uint32_t C_SUB_AMBER = 0xFFFFFF;
-static const uint32_t C_OFF = 0x98A5B5;
-static const uint32_t C_DIM = 0xA5B1C0;
-static const uint32_t C_TEAL_INK = 0x226A82;
-static const uint32_t C_CREAM = 0xFFFFFF;
-static const uint32_t C_KEY = 0xFFFFFF;
-static const uint32_t C_KEY_INK = 0x203047;
-static const uint32_t C_ST_BG[4] = {0xFCECEF, 0xE8F3FC, 0xE8F5EF, 0xF0ECFC};
-static const uint32_t C_ST_EDGE[4] = {0xD94D5B, 0x2585A6, 0x169B72, 0x7962CE};
+static const uint32_t C_BG = 0x14110E;
+static const uint32_t C_BAR = 0x221C17;
+static const uint32_t C_SURF = 0x221C17;
+static const uint32_t C_SURF2 = 0x2C251E;
+static const uint32_t C_LINE = 0x4A3E34;
+static const uint32_t C_TEXT = 0xF6F1E8;
+static const uint32_t C_MUTED = 0xA89888;
+static const uint32_t C_AMBER = 0xE4A04A;
+static const uint32_t C_INK = 0x221C17;
+static const uint32_t C_GREEN = 0x8FB573;
+static const uint32_t C_RED = 0xD4654E;
+static const uint32_t C_TEAL = 0x7EAEA4;
+static const uint32_t C_PRESS = 0x3A312A;
+static const uint32_t C_TEAL_BG = 0x1C2C2A;
+static const uint32_t C_CALL_BG = 0x1C2C2A;
+static const uint32_t C_WARM = 0x3A2C18;
+static const uint32_t C_ALERT = 0x3A211D;
+static const uint32_t C_INK_RED = 0x221C17;
+static const uint32_t C_SUB_RED = 0x221C17;
+static const uint32_t C_SUB_AMBER = 0x221C17;
+static const uint32_t C_OFF = 0x75685C;
+static const uint32_t C_DIM = 0x75685C;
+static const uint32_t C_TEAL_INK = 0x4E726C;
+static const uint32_t C_CREAM = 0x221C17;
+static const uint32_t C_KEY = 0x221C17;
+static const uint32_t C_KEY_INK = 0xF6F1E8;
+static const uint32_t C_ST_BG[4] = {0x3A211D, 0xE8F3FC, 0xE8F5EF, 0xF0ECFC};
+static const uint32_t C_ST_EDGE[4] = {0xD4654E, 0x7EAEA4, 0x8FB573, 0x7962CE};
 
 enum {
     SCR_SPLASH = 0,
@@ -387,9 +387,9 @@ static lv_obj_t *card_at(lv_obj_t *parent, int x, int y, int w, int h, uint32_t 
     lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(o, radius, 0);
     if (radius >= 16) {
-        lv_obj_set_style_shadow_width(o, 14, 0);
-        lv_obj_set_style_shadow_color(o, lv_color_hex(0xC9D4E2), 0);
-        lv_obj_set_style_shadow_opa(o, LV_OPA_20, 0);
+        lv_obj_set_style_shadow_width(o, 0, 0);
+        lv_obj_set_style_shadow_color(o, lv_color_hex(0x000000), 0);
+        lv_obj_set_style_shadow_opa(o, LV_OPA_TRANSP, 0);
         lv_obj_set_style_shadow_ofs_y(o, 4, 0);
     }
     lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
@@ -437,13 +437,13 @@ static void tone(const Btn *b, int kind) {
         bg = C_AMBER;
         fg = C_INK;
         sg = C_SUB_AMBER;
-        press = 0xC88830;
+        press = 0xC88436;
         border = C_AMBER;
     } else if (kind == T_RED) {
         bg = C_RED;
         fg = C_INK_RED;
         sg = C_SUB_RED;
-        press = 0xB8503C;
+        press = 0xA94D3C;
         border = C_RED;
     } else if (kind == T_LOCKED) {
         bg = C_SURF;
@@ -509,11 +509,11 @@ static Btn make_btn(lv_obj_t *parent, int x, int y, int w, int h, const char *ti
     lv_obj_set_pos(b.btn, x, y);
     lv_obj_set_size(b.btn, w, h);
     plain(b.btn);
-    lv_obj_set_style_radius(b.btn, 22, 0);
+    lv_obj_set_style_radius(b.btn, 14, 0);
     lv_obj_set_style_bg_opa(b.btn, LV_OPA_COVER, 0);
-    lv_obj_set_style_shadow_width(b.btn, 10, 0);
-    lv_obj_set_style_shadow_color(b.btn, lv_color_hex(0xC9D4E2), 0);
-    lv_obj_set_style_shadow_opa(b.btn, LV_OPA_20, 0);
+    lv_obj_set_style_shadow_width(b.btn, 0, 0);
+    lv_obj_set_style_shadow_color(b.btn, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_shadow_opa(b.btn, LV_OPA_TRANSP, 0);
     lv_obj_set_style_shadow_ofs_y(b.btn, 3, 0);
     lv_obj_set_flex_flow(b.btn, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(b.btn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -560,7 +560,7 @@ static Card make_station(lv_obj_t *parent, int x, int y) {
     lv_obj_set_pos(c.btn, x, y);
     lv_obj_set_size(c.btn, 232, 188);
     plain(c.btn);
-    lv_obj_set_style_radius(c.btn, 18, 0);
+    lv_obj_set_style_radius(c.btn, 12, 0);
     lv_obj_set_style_bg_opa(c.btn, LV_OPA_COVER, 0);
     c.dot = dot_at(c.btn, 20, 22, 10);
     c.tag = label_at(c.btn, 38, 16, &lv_font_montserrat_14, C_GREEN, "ONLINE");
@@ -975,7 +975,7 @@ static void style_keyboard(lv_obj_t *kb) {
     lv_obj_set_style_radius(kb, 10, LV_PART_ITEMS);
     lv_obj_set_style_border_width(kb, 0, LV_PART_ITEMS);
     lv_obj_set_style_pad_all(kb, 2, LV_PART_ITEMS);
-    lv_obj_set_style_bg_color(kb, lv_color_hex(0xD5E2F4),
+    lv_obj_set_style_bg_color(kb, lv_color_hex(0x4A3E34),
                              (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(kb, lv_color_hex(C_AMBER),
                              (lv_style_selector_t)((unsigned)LV_PART_ITEMS | (unsigned)LV_STATE_CHECKED));
@@ -985,7 +985,7 @@ static void style_keyboard(lv_obj_t *kb) {
 }
 
 static void style_ta(lv_obj_t *ta) {
-    lv_obj_set_style_bg_color(ta, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_bg_color(ta, lv_color_hex(0x221C17), 0);
     lv_obj_set_style_bg_opa(ta, LV_OPA_COVER, 0);
     lv_obj_set_style_text_color(ta, lv_color_hex(C_TEXT), 0);
     lv_obj_set_style_text_font(ta, &lv_font_montserrat_20, 0);
@@ -2436,7 +2436,7 @@ static void build_bar(void) {
     lv_obj_set_pos(bar, 0, 0);
     lv_obj_set_size(bar, PANEL_W, 72);
     plain(bar);
-    lv_obj_set_style_bg_color(bar, lv_color_hex(C_BAR), 0);
+    lv_obj_set_style_bg_color(bar, lv_color_hex(0x100E0C), 0);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(bar, 0, 0);
     lv_obj_clear_flag(bar, LV_OBJ_FLAG_CLICKABLE);
@@ -2450,10 +2450,10 @@ static void build_bar(void) {
         lv_obj_set_style_bg_opa(mark, LV_OPA_COVER, 0);
         lv_obj_set_style_radius(mark, 2, 0);
         lv_obj_clear_flag(mark, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_pos(line, 0, 69);
-        lv_obj_set_size(line, PANEL_W, 3);
+        lv_obj_set_pos(line, 0, 71);
+        lv_obj_set_size(line, PANEL_W, 1);
         plain(line);
-        lv_obj_set_style_bg_color(line, lv_color_hex(C_TEAL), 0);
+        lv_obj_set_style_bg_color(line, lv_color_hex(C_LINE), 0);
         lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
         lv_obj_set_style_radius(line, 0, 0);
         lv_obj_clear_flag(line, LV_OBJ_FLAG_CLICKABLE);
@@ -2465,7 +2465,7 @@ static void build_bar(void) {
     lv_obj_set_size(s_pill, 148, 36);
     lv_obj_align(s_pill, LV_ALIGN_TOP_MID, 0, 18);
     plain(s_pill);
-    lv_obj_set_style_bg_color(s_pill, lv_color_hex(C_SURF2), 0);
+    lv_obj_set_style_bg_color(s_pill, lv_color_hex(0x2C251E), 0);
     lv_obj_set_style_bg_opa(s_pill, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(s_pill, 18, 0);
     lv_obj_clear_flag(s_pill, LV_OBJ_FLAG_CLICKABLE);
@@ -2493,7 +2493,7 @@ static void build_bar(void) {
         lv_obj_set_pos(body, 888, 28);
         lv_obj_set_size(body, 28, 14);
         plain(body);
-        lv_obj_set_style_bg_color(body, lv_color_hex(C_BG), 0);
+        lv_obj_set_style_bg_color(body, lv_color_hex(0x14110E), 0);
         lv_obj_set_style_bg_opa(body, LV_OPA_COVER, 0);
         lv_obj_set_style_border_color(body, lv_color_hex(C_TEXT), 0);
         lv_obj_set_style_border_width(body, 2, 0);
@@ -2520,21 +2520,21 @@ static void build_bar(void) {
 }
 
 static void build_home(lv_obj_t *v) {
-    static const int xs[] = {24, 268, 512, 756};
+    static const int xs[] = {32, 276, 520, 764};
     int i;
     lv_obj_t *strip;
-    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Station directory");
-    label_at(v, 360, 88, &lv_font_montserrat_14, C_MUTED, "Choose a room to start a private call or page");
+    label_at(v, 32, 96, &lv_font_montserrat_28, C_TEXT, "Station directory");
+    label_at(v, 32, 130, &lv_font_montserrat_14, C_MUTED, "Choose a room to start a private call or page");
     for (i = 0; i < 4; i++) {
-        s_home_card[i] = make_station(v, xs[i], 112);
+        s_home_card[i] = make_station(v, xs[i], 148);
         bind_station(&s_home_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_call_b = make_btn(v, 24, 320, 184, 96, "Call", "Select a station", on_call, NULL);
-    s_mic_b = make_btn(v, 220, 320, 184, 96, "Mic", "Off", on_mic, NULL);
-    s_page_b = make_btn(v, 416, 320, 184, 96, "Page", "Select a floor", on_page, NULL);
-    s_all_b = make_btn(v, 612, 320, 184, 96, "Page all", "101 / 102 / 103", on_page_all, NULL);
-    s_end_b = make_btn(v, 808, 320, 192, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 438, 976, 138, C_SURF, 20);
+    s_call_b = make_btn(v, 32, 368, 176, 84, "Call", "Select a station", on_call, NULL);
+    s_mic_b = make_btn(v, 220, 368, 176, 84, "Mic", "Off", on_mic, NULL);
+    s_page_b = make_btn(v, 408, 368, 176, 84, "Page", "Select a floor", on_page, NULL);
+    s_all_b = make_btn(v, 596, 368, 176, 84, "Page all", "101 / 102 / 103", on_page_all, NULL);
+    s_end_b = make_btn(v, 784, 368, 208, 84, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 32, 468, 960, 108, C_SURF, 20);
     label_at(strip, 24, 14, &lv_font_montserrat_14, C_MUTED, "SPEAKER");
     s_home_vol = label_at(strip, 500, 14, &lv_font_montserrat_14, C_TEXT, "60");
     s_home_slider = lv_slider_create(strip);
@@ -2556,17 +2556,17 @@ static void build_floor(lv_obj_t *v) {
     static const int xs[] = {24, 268, 512, 756};
     int i;
     lv_obj_t *strip;
-    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Floor console");
-    label_at(v, 360, 88, &lv_font_montserrat_14, C_MUTED, "Select a station to call; microphone stays muted until Talk");
+    label_at(v, 32, 96, &lv_font_montserrat_28, C_TEXT, "Floor console");
+    label_at(v, 32, 130, &lv_font_montserrat_14, C_MUTED, "Select a station to call; microphone stays muted until Talk");
     for (i = 0; i < 4; i++) {
         s_floor_card[i] = make_station(v, xs[i], 112);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_fcall = make_btn(v, 24, 320, 300, 96, "Call", "Select a station", on_call, NULL);
-    s_fmic = make_btn(v, 340, 320, 220, 96, "Mic", "Off", on_mic, NULL);
-    s_fpage = make_btn(v, 576, 320, 210, 96, "Page", "Reception only", on_page, NULL);
-    s_fend = make_btn(v, 802, 320, 198, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 438, 976, 138, C_SURF, 20);
+    s_fcall = make_btn(v, 32, 368, 224, 84, "Call", "Select a station", on_call, NULL);
+    s_fmic = make_btn(v, 272, 368, 224, 84, "Mic", "Off", on_mic, NULL);
+    s_fpage = make_btn(v, 512, 368, 224, 84, "Page", "Reception only", on_page, NULL);
+    s_fend = make_btn(v, 752, 368, 240, 84, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 32, 468, 960, 108, C_SURF, 20);
     s_floor_title = label_at(strip, 24, 28, &lv_font_montserrat_22, C_AMBER, "Microphone off");
     {
         lv_obj_t *hint = label_at(strip, 24, 64, &lv_font_montserrat_16, C_MUTED,
@@ -2686,18 +2686,18 @@ static void build_live(lv_obj_t *v) {
 }
 
 static void build_page(lv_obj_t *v) {
-    static const int xs[] = {24, 356, 688};
+    static const int xs[] = {32, 352, 672};
     int i;
     lv_obj_t *foot;
     s_pg_title = label_at(v, 24, 76, &lv_font_montserrat_36, C_TEXT, "Paging");
     clip_label(s_pg_title, 960);
     label_at(v, 24, 124, &lv_font_montserrat_16, C_MUTED, "One floor. A private call is left alone.");
     for (i = 0; i < 3; i++) {
-        s_pg_card[i] = make_info_card(v, xs[i], 176, 312, 180);
+        s_pg_card[i] = make_info_card(v, xs[i], 192, 296, 152);
     }
-    s_pg_talk = make_btn(v, 24, 376, 312, 100, "Talk", "Mic is off", on_mic, NULL);
-    s_pg_end = make_btn(v, 356, 376, 312, 100, "End page", "Stops this floor", on_end, NULL);
-    s_pg_all = make_btn(v, 688, 376, 312, 100, "Page all", "Switch to all floors", on_page_all, NULL);
+    s_pg_talk = make_btn(v, 32, 376, 296, 84, "Talk", "Mic is off", on_mic, NULL);
+    s_pg_end = make_btn(v, 352, 376, 296, 84, "End page", "Stops this floor", on_end, NULL);
+    s_pg_all = make_btn(v, 672, 376, 320, 84, "Page all", "Switch to all floors", on_page_all, NULL);
     foot = card_at(v, 24, 496, 976, 80, C_SURF, 16);
     s_pg_foot = label_at(foot, 24, 12, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_pg_foot, 920);
@@ -2712,10 +2712,10 @@ static void build_page_all(lv_obj_t *v) {
     s_pa_title = label_at(v, 24, 76, &lv_font_montserrat_36, C_TEXT, "All free floors");
     label_at(v, 24, 124, &lv_font_montserrat_16, C_MUTED, "Each floor gets its own stream. Busy floors are skipped.");
     for (i = 0; i < 3; i++) {
-        s_pa_card[i] = make_info_card(v, xs[i], 176, 312, 180);
+        s_pa_card[i] = make_info_card(v, xs[i], 192, 296, 152);
     }
-    s_pa_talk = make_btn(v, 24, 376, 480, 100, "Talk", "Floors hear silence until you do", on_mic, NULL);
-    s_pa_end = make_btn(v, 520, 376, 480, 100, "End page", "All floors drop", on_end, NULL);
+    s_pa_talk = make_btn(v, 32, 376, 456, 84, "Talk", "Floors hear silence until you do", on_mic, NULL);
+    s_pa_end = make_btn(v, 512, 376, 480, 84, "End page", "All floors drop", on_end, NULL);
     foot = card_at(v, 24, 496, 976, 80, C_SURF, 16);
     label_at(foot, 24, 12, &lv_font_montserrat_16, C_TEXT, "A floor already in a private call does not hear this page.");
     s_pa_foot = label_at(foot, 24, 42, &lv_font_montserrat_14, C_MUTED, "");
@@ -2983,8 +2983,8 @@ static void build_wifi(lv_obj_t *v) {
     tone(&save, T_AMBER);
     make_btn(v, 776, 278, 200, 48, "Back", "", on_back_setup, NULL);
     s_kb = lv_keyboard_create(v);
-    lv_obj_set_pos(s_kb, 0, 340);
-    lv_obj_set_size(s_kb, PANEL_W, 260);
+    lv_obj_set_pos(s_kb, 0, 392);
+    lv_obj_set_size(s_kb, PANEL_W, 208);
     style_keyboard(s_kb);
     lv_keyboard_set_mode(s_kb, LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(s_kb, s_ssid_ta);
@@ -3041,39 +3041,39 @@ static void build_splash(void) {
     lv_obj_add_flag(s_splash_scr, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(s_splash_scr, on_splash_tap, LV_EVENT_CLICKED, NULL);
     mark = lv_obj_create(s_splash_scr);
-    lv_obj_set_pos(mark, 0, 160);
-    lv_obj_set_size(mark, 8, 280);
+    lv_obj_set_pos(mark, 48, 164);
+    lv_obj_set_size(mark, 4, 272);
     plain(mark);
     lv_obj_set_style_bg_color(mark, lv_color_hex(C_AMBER), 0);
     lv_obj_set_style_bg_opa(mark, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(mark, 0, 0);
     lv_obj_clear_flag(mark, LV_OBJ_FLAG_CLICKABLE);
-    label_at(s_splash_scr, 64, 156, &lv_font_montserrat_48, C_TEXT, "LAN INTERCOM");
-    s_splash_sub = label_at(s_splash_scr, 64, 230, &lv_font_montserrat_22, C_MUTED, "Starting");
-    s_splash_kick = label_at(s_splash_scr, 64, 300, &lv_font_montserrat_14, C_AMBER, "STARTING");
+    label_at(s_splash_scr, 80, 164, &lv_font_montserrat_48, C_TEXT, "LAN INTERCOM");
+    s_splash_sub = label_at(s_splash_scr, 80, 232, &lv_font_montserrat_22, C_MUTED, "Starting");
+    s_splash_kick = label_at(s_splash_scr, 80, 292, &lv_font_montserrat_14, C_AMBER, "STARTING");
     lv_obj_set_style_text_letter_space(s_splash_kick, 2, 0);
     for (i = 0; i < 4; i++) {
-        s_splash_key[i] = label_at(s_splash_scr, 64, ys[i], &lv_font_montserrat_20, cols[i], keys[i]);
-        s_splash_val[i] = label_at(s_splash_scr, 280, ys[i], &lv_font_montserrat_20, C_MUTED, "");
+        s_splash_key[i] = label_at(s_splash_scr, 80, ys[i], &lv_font_montserrat_20, cols[i], keys[i]);
+        s_splash_val[i] = label_at(s_splash_scr, 260, ys[i], &lv_font_montserrat_20, C_MUTED, "");
         clip_label(s_splash_val[i], 640);
     }
     track = lv_obj_create(s_splash_scr);
-    lv_obj_set_pos(track, 64, 530);
-    lv_obj_set_size(track, 896, 6);
+    lv_obj_set_pos(track, 80, 530);
+    lv_obj_set_size(track, 864, 6);
     plain(track);
     lv_obj_set_style_bg_color(track, lv_color_hex(C_PRESS), 0);
     lv_obj_set_style_bg_opa(track, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(track, 3, 0);
     lv_obj_clear_flag(track, LV_OBJ_FLAG_CLICKABLE);
     s_splash_fill = lv_obj_create(s_splash_scr);
-    lv_obj_set_pos(s_splash_fill, 64, 530);
+    lv_obj_set_pos(s_splash_fill, 80, 530);
     lv_obj_set_size(s_splash_fill, 0, 6);
     plain(s_splash_fill);
     lv_obj_set_style_bg_color(s_splash_fill, lv_color_hex(C_AMBER), 0);
     lv_obj_set_style_bg_opa(s_splash_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(s_splash_fill, 3, 0);
     lv_obj_clear_flag(s_splash_fill, LV_OBJ_FLAG_CLICKABLE);
-    label_at(s_splash_scr, 64, 548, &lv_font_montserrat_16, C_MUTED,
+    label_at(s_splash_scr, 80, 548, &lv_font_montserrat_16, C_MUTED,
              "Radio, audio, and the touch panel come up before the directory.");
 }
 
