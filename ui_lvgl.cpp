@@ -509,7 +509,7 @@ static Btn make_btn(lv_obj_t *parent, int x, int y, int w, int h, const char *ti
     lv_obj_set_pos(b.btn, x, y);
     lv_obj_set_size(b.btn, w, h);
     plain(b.btn);
-    lv_obj_set_style_radius(b.btn, 14, 0);
+    lv_obj_set_style_radius(b.btn, 16, 0);
     lv_obj_set_style_bg_opa(b.btn, LV_OPA_COVER, 0);
     lv_obj_set_style_shadow_width(b.btn, 0, 0);
     lv_obj_set_style_shadow_color(b.btn, lv_color_hex(0x000000), 0);
@@ -961,7 +961,7 @@ static void style_keyboard(lv_obj_t *kb) {
     if (!kb) {
         return;
     }
-    lv_obj_set_style_bg_color(kb, lv_color_hex(C_SURF2), 0);
+    lv_obj_set_style_bg_color(kb, lv_color_hex(0x100E0C), 0);
     lv_obj_set_style_bg_opa(kb, LV_OPA_COVER, 0);
     lv_obj_set_style_pad_all(kb, 6, 0);
     lv_obj_set_style_pad_row(kb, 4, 0);
@@ -2436,7 +2436,7 @@ static void build_bar(void) {
     lv_obj_set_pos(bar, 0, 0);
     lv_obj_set_size(bar, PANEL_W, 72);
     plain(bar);
-    lv_obj_set_style_bg_color(bar, lv_color_hex(0x100E0C), 0);
+    lv_obj_set_style_bg_color(bar, lv_color_hex(C_BAR), 0);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(bar, 0, 0);
     lv_obj_clear_flag(bar, LV_OBJ_FLAG_CLICKABLE);
@@ -2523,33 +2523,33 @@ static void build_home(lv_obj_t *v) {
     static const int xs[] = {32, 276, 520, 764};
     int i;
     lv_obj_t *strip;
-    label_at(v, 32, 96, &lv_font_montserrat_28, C_TEXT, "Station directory");
-    label_at(v, 32, 130, &lv_font_montserrat_14, C_MUTED, "Choose a room to start a private call or page");
+    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Station directory");
+    label_at(v, 24, 284, &lv_font_montserrat_14, C_MUTED, "Tap a station, then Call. Your own tile is not a destination.");
     for (i = 0; i < 4; i++) {
-        s_home_card[i] = make_station(v, xs[i], 148);
+        s_home_card[i] = make_station(v, xs[i], 96);
         bind_station(&s_home_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_call_b = make_btn(v, 32, 368, 176, 84, "Call", "Select a station", on_call, NULL);
-    s_mic_b = make_btn(v, 220, 368, 176, 84, "Mic", "Off", on_mic, NULL);
-    s_page_b = make_btn(v, 408, 368, 176, 84, "Page", "Select a floor", on_page, NULL);
-    s_all_b = make_btn(v, 596, 368, 176, 84, "Page all", "101 / 102 / 103", on_page_all, NULL);
-    s_end_b = make_btn(v, 784, 368, 208, 84, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 32, 468, 960, 108, C_SURF, 20);
+    s_call_b = make_btn(v, 24, 308, 184, 96, "Call", "Select a station", on_call, NULL);
+    s_mic_b = make_btn(v, 220, 308, 184, 96, "Mic", "Off", on_mic, NULL);
+    s_page_b = make_btn(v, 416, 308, 184, 96, "Page", "Select a floor", on_page, NULL);
+    s_all_b = make_btn(v, 612, 308, 184, 96, "Page all", "101 / 102 / 103", on_page_all, NULL);
+    s_end_b = make_btn(v, 808, 308, 192, 96, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
     label_at(strip, 24, 14, &lv_font_montserrat_14, C_MUTED, "SPEAKER");
     s_home_vol = label_at(strip, 500, 14, &lv_font_montserrat_14, C_TEXT, "60");
     s_home_slider = lv_slider_create(strip);
-    lv_obj_set_pos(s_home_slider, 24, 36);
-    lv_obj_set_size(s_home_slider, 520, 28);
+    lv_obj_set_pos(s_home_slider, 24, 42);
+    lv_obj_set_size(s_home_slider, 520, 16);
     style_slider(s_home_slider);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_RELEASED, NULL);
-    s_home_headset = label_at(strip, 576, 28, &lv_font_montserrat_14, C_GREEN, "HEADSET WAITING");
+    s_home_headset = label_at(strip, 600, 44, &lv_font_montserrat_14, C_GREEN, "HEADSET WAITING");
     lv_obj_set_style_text_letter_space(s_home_headset, 1, 0);
-    s_home_status = label_at(strip, 576, 58, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
+    s_home_status = label_at(strip, 600, 76, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
     clip_label(s_home_status, 250);
     label_at(strip, 24, 112, &lv_font_montserrat_14, C_MUTED,
              "Tap a station, then Call. Your own tile is not a destination.");
-    make_btn(strip, 836, 48, 116, 64, "Setup", "", on_setup, NULL);
+    make_btn(strip, 836, 56, 116, 64, "Setup", "", on_setup, NULL);
 }
 
 static void build_floor(lv_obj_t *v) {
@@ -2562,11 +2562,11 @@ static void build_floor(lv_obj_t *v) {
         s_floor_card[i] = make_station(v, xs[i], 112);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_fcall = make_btn(v, 32, 368, 224, 84, "Call", "Select a station", on_call, NULL);
-    s_fmic = make_btn(v, 272, 368, 224, 84, "Mic", "Off", on_mic, NULL);
-    s_fpage = make_btn(v, 512, 368, 224, 84, "Page", "Reception only", on_page, NULL);
-    s_fend = make_btn(v, 752, 368, 240, 84, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 32, 468, 960, 108, C_SURF, 20);
+    s_fcall = make_btn(v, 24, 308, 300, 96, "Call", "Select a station", on_call, NULL);
+    s_fmic = make_btn(v, 340, 308, 220, 96, "Mic", "Off", on_mic, NULL);
+    s_fpage = make_btn(v, 576, 308, 210, 96, "Page", "Reception only", on_page, NULL);
+    s_fend = make_btn(v, 802, 308, 198, 96, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
     s_floor_title = label_at(strip, 24, 28, &lv_font_montserrat_22, C_AMBER, "Microphone off");
     {
         lv_obj_t *hint = label_at(strip, 24, 64, &lv_font_montserrat_16, C_MUTED,
@@ -2686,18 +2686,18 @@ static void build_live(lv_obj_t *v) {
 }
 
 static void build_page(lv_obj_t *v) {
-    static const int xs[] = {32, 352, 672};
+    static const int xs[] = {24, 356, 688};
     int i;
     lv_obj_t *foot;
     s_pg_title = label_at(v, 24, 76, &lv_font_montserrat_36, C_TEXT, "Paging");
     clip_label(s_pg_title, 960);
     label_at(v, 24, 124, &lv_font_montserrat_16, C_MUTED, "One floor. A private call is left alone.");
     for (i = 0; i < 3; i++) {
-        s_pg_card[i] = make_info_card(v, xs[i], 192, 296, 152);
+        s_pg_card[i] = make_info_card(v, xs[i], 176, 312, 180);
     }
-    s_pg_talk = make_btn(v, 32, 376, 296, 84, "Talk", "Mic is off", on_mic, NULL);
-    s_pg_end = make_btn(v, 352, 376, 296, 84, "End page", "Stops this floor", on_end, NULL);
-    s_pg_all = make_btn(v, 672, 376, 320, 84, "Page all", "Switch to all floors", on_page_all, NULL);
+    s_pg_talk = make_btn(v, 24, 376, 312, 100, "Talk", "Mic is off", on_mic, NULL);
+    s_pg_end = make_btn(v, 356, 376, 312, 100, "End page", "Stops this floor", on_end, NULL);
+    s_pg_all = make_btn(v, 688, 376, 312, 100, "Page all", "Switch to all floors", on_page_all, NULL);
     foot = card_at(v, 24, 496, 976, 80, C_SURF, 16);
     s_pg_foot = label_at(foot, 24, 12, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_pg_foot, 920);
@@ -2714,8 +2714,8 @@ static void build_page_all(lv_obj_t *v) {
     for (i = 0; i < 3; i++) {
         s_pa_card[i] = make_info_card(v, xs[i], 192, 296, 152);
     }
-    s_pa_talk = make_btn(v, 32, 376, 456, 84, "Talk", "Floors hear silence until you do", on_mic, NULL);
-    s_pa_end = make_btn(v, 512, 376, 480, 84, "End page", "All floors drop", on_end, NULL);
+    s_pa_talk = make_btn(v, 24, 376, 480, 100, "Talk", "Floors hear silence until you do", on_mic, NULL);
+    s_pa_end = make_btn(v, 520, 376, 480, 100, "End page", "All floors drop", on_end, NULL);
     foot = card_at(v, 24, 496, 976, 80, C_SURF, 16);
     label_at(foot, 24, 12, &lv_font_montserrat_16, C_TEXT, "A floor already in a private call does not hear this page.");
     s_pa_foot = label_at(foot, 24, 42, &lv_font_montserrat_14, C_MUTED, "");
