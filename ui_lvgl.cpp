@@ -1251,7 +1251,6 @@ static void on_security_ta(lv_event_t *e) {
         if (s_sec_kb) lv_keyboard_set_textarea(s_sec_kb, ta);
     } else if (code == LV_EVENT_READY) {
         if (ta == s_sec_key_ta) {
-            s_sec_active = s_sec_pin_ta;
             lv_keyboard_set_textarea(s_sec_kb, s_sec_pin_ta);
         } else {
             security_commit();
