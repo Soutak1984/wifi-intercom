@@ -60,25 +60,41 @@ static void blit_partial(uint16_t *fb, const lv_area_t *area, const lv_color_t *
     }
 }
 
-static bool area_covers_screen(const lv_area_t *area) {
-    return area->x1 <= 0 && area->y1 <= 0 && area->x2 >= PANEL_W - 1 && area->y2 >= PANEL_H - 1;
+/* Keep the LCD scanout buffer immutable while LVGL renders.  Copy each
+ * dirty rectangle from the visible page to the back page first; LVGL then
+ * paints every invalidated rectangle into the back page and we swap only
+ * after the final flush.  Writing partial updates directly into s_shown
+ * causes tearing because the RGB DMA may be reading those same pixels. */
+static void copy_area(uint16_t *dst, const uint16_t *src, const lv_area_t *area) {
+    int x1 = area->x1 < 0 ? 0 : area->x1;
+    int y1 = area->y1 < 0 ? 0 : area->y1;
+    int x2 = area->x2 >= PANEL_W ? PANEL_W - 1 : area->x2;
+    int y2 = area->y2 >= PANEL_H ? PANEL_H - 1 : area->y2;
+    int y;
+    size_t width;
+    if (!dst || !src || x2 < x1 || y2 < y1) {
+        return;
+    }
+    width = (size_t)(x2 - x1 + 1);
+    for (y = y1; y <= y2; y++) {
+        size_t offset = (size_t)y * PANEL_W + (size_t)x1;
+        memcpy(&dst[offset], &src[offset], width * sizeof(uint16_t));
+    }
 }
 
 static void render_start_cb(lv_disp_drv_t *drv) {
     uint16_t i;
     (void)drv;
     s_flip = false;
-    if (!s_disp || !s_off || !s_shown) {
+    if (!s_disp || !s_off || !s_shown || s_disp->inv_p == 0) {
         return;
     }
     for (i = 0; i < s_disp->inv_p; i++) {
         if (s_disp->inv_area_joined[i]) {
             continue;
         }
-        if (area_covers_screen(&s_disp->inv_areas[i])) {
-            s_flip = true;
-            return;
-        }
+        copy_area(s_off, s_shown, &s_disp->inv_areas[i]);
+        s_flip = true;
     }
 }
 
