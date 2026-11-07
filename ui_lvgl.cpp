@@ -2721,6 +2721,7 @@ static void build_page_all(lv_obj_t *v) {
 static void build_rx(lv_obj_t *v) {
     lv_obj_t *box = card_at(v, 24, 104, 976, 250, C_TEAL_BG, 22);
     lv_obj_t *foot;
+    Btn leave;
     stroke(box, C_TEAL, 2);
     label_at(box, 32, 36, &lv_font_montserrat_16, C_TEAL, "RECEPTION IS PAGING");
     s_rx_title = label_at(box, 32, 88, &lv_font_montserrat_48, C_TEXT, "Speaker on");
@@ -2728,7 +2729,8 @@ static void build_rx(lv_obj_t *v) {
     clip_label(s_rx_sub, 900);
     s_rx_lock = make_btn(v, 24, 376, 480, 120, "Mic locked", "Stays off during a page", NULL, NULL);
     tone(&s_rx_lock, T_DISABLED);
-    make_btn(v, 520, 376, 480, 120, "Leave", "Drops this page", on_end, NULL);
+    leave = make_btn(v, 520, 376, 480, 120, "Leave", "Drops this page", on_end, NULL);
+    tone(&leave, T_RED);
     foot = card_at(v, 24, 516, 976, 60, C_SURF, 14);
     s_rx_foot = label_at(foot, 24, 18, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_rx_foot, 920);
@@ -2737,6 +2739,7 @@ static void build_rx(lv_obj_t *v) {
 static void build_busy(lv_obj_t *v) {
     lv_obj_t *box = card_at(v, 24, 104, 976, 280, C_SURF, 22);
     lv_obj_t *foot;
+    Btn back;
     s_busy_title = label_at(box, 32, 36, &lv_font_montserrat_48, C_TEXT, "Busy");
     clip_label(s_busy_title, 900);
     label_at(box, 32, 112, &lv_font_montserrat_22, C_MUTED, "The call was not started. Their conversation stays up.");
@@ -2744,7 +2747,8 @@ static void build_busy(lv_obj_t *v) {
     clip_label(s_busy_line, 900);
     s_busy_alt[0] = make_btn(v, 24, 412, 312, 100, "Station", "Online", on_busy_pick, (void *)(intptr_t)0);
     s_busy_alt[1] = make_btn(v, 356, 412, 312, 100, "Station", "Offline", on_busy_pick, (void *)(intptr_t)1);
-    make_btn(v, 688, 412, 312, 100, "Back", "Stay idle", on_back_home, NULL);
+    back = make_btn(v, 688, 412, 312, 100, "Back", "Stay idle", on_back_home, NULL);
+    tone(&back, T_AMBER);
     foot = card_at(v, 24, 532, 976, 44, C_SURF, 12);
     label_at(foot, 24, 12, &lv_font_montserrat_16, C_MUTED, "A second private call is rejected. A page also skips a busy floor.");
 }
@@ -2760,6 +2764,7 @@ static void build_link(lv_obj_t *v) {
     clip_label(s_link_ssid, 880);
     s_link_msg = label_at(box, 32, 168, &lv_font_montserrat_20, C_MUTED, "");
     clip_label(s_link_msg, 880);
+    label_at(v, 800, 210, &lv_font_montserrat_16, C_RED, "No signal");
     for (i = 0; i < 4; i++) {
         lv_obj_t *chip = card_at(v, xs[i], 376, 232, 110, C_SURF, 16);
         s_link_name[i] = label_at(chip, 20, 22, &lv_font_montserrat_20, C_MUTED, "");
@@ -2856,7 +2861,10 @@ static void build_setup(lv_obj_t *v) {
     label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL  /  Tap any numeric value above to type");
     s_setup_meter = meter_bar(v, 52, 406, 540, 16, C_TEAL);
     label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
-    make_btn(v, 52, 478, 250, 72, "Audio test", "Idle tone, not sent", on_test, NULL);
+    {
+        Btn testb = make_btn(v, 52, 478, 250, 72, "Audio test", "Idle tone, not sent", on_test, NULL);
+        tone(&testb, T_TEAL);
+    }
     {
         Btn powerb = make_btn(v, 318, 478, 250, 72, "Power", "Wi-Fi and battery", on_power, NULL);
         tone(&powerb, T_SURFACE);
