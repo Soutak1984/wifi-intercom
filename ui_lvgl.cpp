@@ -860,8 +860,22 @@ static void aec_label(int ms) {
 }
 
 static void close_setup_keyboard(void) {
+    int volume;
+    int gain;
+    int aec_ms;
     show(s_setup_kb, false);
     s_setup_active_ta = NULL;
+    if (!g_app.lock) {
+        return;
+    }
+    app_lock();
+    volume = g_app.cfg.volume;
+    gain = g_app.cfg.mic_gain;
+    aec_ms = (int)g_app.cfg.aec_samples / 8;
+    app_unlock();
+    vol_labels(volume);
+    gain_label(gain);
+    aec_label(aec_ms);
 }
 
 static void on_setup_field(lv_event_t *e) {
@@ -1273,6 +1287,8 @@ static void on_ta(lv_event_t *e) {
         } else if (code == LV_EVENT_READY) {
             if (s_net_active + 1 < NET_N) {
                 show_net_field(s_net_active + 1);
+                show(s_net_kb, true);
+                lv_obj_move_foreground(s_net_kb);
             } else {
                 net_commit();
             }
@@ -2507,16 +2523,18 @@ static void build_home(lv_obj_t *v) {
     static const int xs[] = {24, 268, 512, 756};
     int i;
     lv_obj_t *strip;
+    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Station directory");
+    label_at(v, 360, 88, &lv_font_montserrat_14, C_MUTED, "Choose a room to start a private call or page");
     for (i = 0; i < 4; i++) {
-        s_home_card[i] = make_station(v, xs[i], 96);
+        s_home_card[i] = make_station(v, xs[i], 112);
         bind_station(&s_home_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_call_b = make_btn(v, 24, 308, 184, 96, "Call", "Select a station", on_call, NULL);
-    s_mic_b = make_btn(v, 220, 308, 184, 96, "Mic", "Off", on_mic, NULL);
-    s_page_b = make_btn(v, 416, 308, 184, 96, "Page", "Select a floor", on_page, NULL);
-    s_all_b = make_btn(v, 612, 308, 184, 96, "Page all", "101 / 102 / 103", on_page_all, NULL);
-    s_end_b = make_btn(v, 808, 308, 192, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
+    s_call_b = make_btn(v, 24, 320, 184, 96, "Call", "Select a station", on_call, NULL);
+    s_mic_b = make_btn(v, 220, 320, 184, 96, "Mic", "Off", on_mic, NULL);
+    s_page_b = make_btn(v, 416, 320, 184, 96, "Page", "Select a floor", on_page, NULL);
+    s_all_b = make_btn(v, 612, 320, 184, 96, "Page all", "101 / 102 / 103", on_page_all, NULL);
+    s_end_b = make_btn(v, 808, 320, 192, 96, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 24, 438, 976, 138, C_SURF, 20);
     label_at(strip, 24, 14, &lv_font_montserrat_14, C_MUTED, "SPEAKER");
     s_home_vol = label_at(strip, 500, 14, &lv_font_montserrat_14, C_TEXT, "60");
     s_home_slider = lv_slider_create(strip);
@@ -2538,15 +2556,17 @@ static void build_floor(lv_obj_t *v) {
     static const int xs[] = {24, 268, 512, 756};
     int i;
     lv_obj_t *strip;
+    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Floor console");
+    label_at(v, 360, 88, &lv_font_montserrat_14, C_MUTED, "Select a station to call; microphone stays muted until Talk");
     for (i = 0; i < 4; i++) {
-        s_floor_card[i] = make_station(v, xs[i], 96);
+        s_floor_card[i] = make_station(v, xs[i], 112);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_fcall = make_btn(v, 24, 308, 300, 96, "Call", "Select a station", on_call, NULL);
-    s_fmic = make_btn(v, 340, 308, 220, 96, "Mic", "Off", on_mic, NULL);
-    s_fpage = make_btn(v, 576, 308, 210, 96, "Page", "Reception only", on_page, NULL);
-    s_fend = make_btn(v, 802, 308, 198, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
+    s_fcall = make_btn(v, 24, 320, 300, 96, "Call", "Select a station", on_call, NULL);
+    s_fmic = make_btn(v, 340, 320, 220, 96, "Mic", "Off", on_mic, NULL);
+    s_fpage = make_btn(v, 576, 320, 210, 96, "Page", "Reception only", on_page, NULL);
+    s_fend = make_btn(v, 802, 320, 198, 96, "End", "Idle", on_end, NULL);
+    strip = card_at(v, 24, 438, 976, 138, C_SURF, 20);
     s_floor_title = label_at(strip, 24, 28, &lv_font_montserrat_22, C_AMBER, "Microphone off");
     {
         lv_obj_t *hint = label_at(strip, 24, 64, &lv_font_montserrat_16, C_MUTED,
@@ -2836,7 +2856,7 @@ static void build_setup(lv_obj_t *v) {
     lv_obj_add_event_cb(s_aec_lbl, on_setup_field, LV_EVENT_ALL, NULL);
     label_at(v, 168, 334, &lv_font_montserrat_14, C_MUTED, "Applies while idle");
     make_btn(v, 444, 290, 80, 64, "+", "", on_aec_step, (void *)(intptr_t)20);
-    label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
+    label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL  /  Tap any numeric value above to type");
     s_setup_meter = meter_bar(v, 52, 396, 540, 16, C_TEAL);
     label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
     make_btn(v, 52, 478, 170, 72, "Audio test", "Local tone", on_test, NULL);
