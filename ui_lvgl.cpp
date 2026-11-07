@@ -69,10 +69,11 @@ enum {
     SCR_POWER,
     SCR_WIFI,
     SCR_NET,
+    SCR_SECURITY,
     SCR_COUNT
 };
 
-enum { NAV_AUTO = 0, NAV_SETUP, NAV_POWER, NAV_WIFI, NAV_NET };
+enum { NAV_AUTO = 0, NAV_SETUP, NAV_POWER, NAV_WIFI, NAV_NET, NAV_SECURITY };
 enum { NET_NAME = 0, NET_IP, NET_GW, NET_MASK, NET_P0, NET_P1, NET_P2, NET_P3, NET_N };
 enum { T_SURFACE = 0, T_AMBER, T_RED, T_LOCKED, T_DISABLED, T_DIM, T_TEAL };
 
@@ -158,6 +159,7 @@ static bool s_quiet = false;
 static bool s_wifi_filled = false;
 static bool s_net_filled = false;
 static bool s_pass_hide = false;
+static bool s_security_filled = false;
 static int s_edit_sid = IC_STATION_MIN;
 static int s_net_active = -1;
 static int s_net_paint_active = -2;
@@ -281,6 +283,11 @@ static lv_obj_t *s_wifi_err;
 static lv_obj_t *s_hide_lbl;
 static lv_obj_t *s_net_ta;
 static lv_obj_t *s_net_kb;
+static lv_obj_t *s_sec_key_ta;
+static lv_obj_t *s_sec_pin_ta;
+static lv_obj_t *s_sec_kb;
+static lv_obj_t *s_sec_err;
+static lv_obj_t *s_sec_active;
 static lv_obj_t *s_net_cap;
 static lv_obj_t *s_net_err;
 static Btn s_net_field[NET_N];
@@ -762,6 +769,10 @@ static void on_back_setup(lv_event_t *e) {
     s_net_active = -1;
 }
 
+static void on_security_nav(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) s_nav = NAV_SECURITY;
+}
+
 static void on_back_home(lv_event_t *e) {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
         return;
@@ -1167,6 +1178,89 @@ static void paint_net(void) {
     }
     if (s_net_paint_active != s_net_active || s_net_paint_sid != s_edit_sid) {
         restyle_net();
+    }
+}
+
+static void security_error(const char *msg, uint32_t color) {
+    set_text(s_sec_err, msg ? msg : "");
+    if (s_sec_err) lv_obj_set_style_text_color(s_sec_err, lv_color_hex(color), 0);
+}
+
+static void security_enter(void) {
+    ic_config_t copy;
+    char key[IC_KEY_LEN + 1];
+    if (s_security_filled || !s_sec_key_ta || !s_sec_pin_ta || !g_app.lock) return;
+    app_lock();
+    copy = g_app.cfg;
+    app_unlock();
+    memcpy(key, copy.key, IC_KEY_LEN);
+    key[IC_KEY_LEN] = 0;
+    lv_textarea_set_text(s_sec_key_ta, key);
+    lv_textarea_set_text(s_sec_pin_ta, copy.pin);
+    s_sec_active = s_sec_key_ta;
+    lv_keyboard_set_textarea(s_sec_kb, s_sec_key_ta);
+    security_error("Key: exactly 16 printable characters. PIN: 4–8 letters or digits.", C_MUTED);
+    s_security_filled = true;
+}
+
+static void security_commit(void) {
+    ic_config_t copy;
+    char key[IC_KEY_LEN + 1];
+    char pin[IC_PIN_LEN + 1];
+    const char *k;
+    const char *p;
+    if (!s_sec_key_ta || !s_sec_pin_ta || !g_app.lock) return;
+    k = lv_textarea_get_text(s_sec_key_ta);
+    p = lv_textarea_get_text(s_sec_pin_ta);
+    snprintf(key, sizeof(key), "%s", k ? k : "");
+    snprintf(pin, sizeof(pin), "%s", p ? p : "");
+    if (!ic_config_key_ok(key)) {
+        security_error("Shared key must be exactly 16 printable characters.", C_RED);
+        s_sec_active = s_sec_key_ta;
+        lv_keyboard_set_textarea(s_sec_kb, s_sec_key_ta);
+        return;
+    }
+    if (!ic_config_pin_ok(pin)) {
+        security_error("Web PIN must be 4–8 letters or digits.", C_RED);
+        s_sec_active = s_sec_pin_ta;
+        lv_keyboard_set_textarea(s_sec_kb, s_sec_pin_ta);
+        return;
+    }
+    app_lock();
+    copy = g_app.cfg;
+    app_unlock();
+    memcpy(copy.key, key, IC_KEY_LEN);
+    snprintf(copy.pin, sizeof(copy.pin), "%s", pin);
+    if (!ic_config_save(&copy)) {
+        security_error("Could not save security settings.", C_RED);
+        return;
+    }
+    app_lock();
+    g_app.cfg = copy;
+    app_unlock();
+    security_error("Saved securely. Restarting station…", C_GREEN);
+    lv_refr_now(NULL);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_restart();
+}
+
+static void on_security_save(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) security_commit();
+}
+
+static void on_security_ta(lv_event_t *e) {
+    lv_obj_t *ta = lv_event_get_target(e);
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) {
+        s_sec_active = ta;
+        if (s_sec_kb) lv_keyboard_set_textarea(s_sec_kb, ta);
+    } else if (code == LV_EVENT_READY) {
+        if (ta == s_sec_key_ta) {
+            s_sec_active = s_sec_pin_ta;
+            lv_keyboard_set_textarea(s_sec_kb, s_sec_pin_ta);
+        } else {
+            security_commit();
+        }
     }
 }
 
@@ -2071,6 +2165,12 @@ static void show_screen(int screen) {
         s_net_filled = false;
         s_net_active = -1;
     }
+    if (screen == SCR_SECURITY && prev != SCR_SECURITY) security_enter();
+    if (screen != SCR_SECURITY && prev == SCR_SECURITY) {
+        s_security_filled = false;
+        if (s_sec_key_ta) lv_textarea_set_text(s_sec_key_ta, "");
+        if (s_sec_pin_ta) lv_textarea_set_text(s_sec_pin_ta, "");
+    }
     s_cur = screen;
 }
 
@@ -2098,6 +2198,9 @@ static int pick_screen(const Snap *s) {
     }
     if (s_nav == NAV_NET) {
         return SCR_NET;
+    }
+    if (s_nav == NAV_SECURITY) {
+        return SCR_SECURITY;
     }
     if (s_nav == NAV_SETUP) {
         return SCR_SETUP;
@@ -2707,12 +2810,16 @@ static void build_setup(lv_obj_t *v) {
     label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
     s_setup_meter = meter_bar(v, 52, 396, 540, 16, C_TEAL);
     label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
-    make_btn(v, 52, 478, 170, 72, "Audio test", "Local tone", on_test, NULL);
+    make_btn(v, 52, 478, 130, 72, "Audio test", "Local tone", on_test, NULL);
     {
-        Btn netb = make_btn(v, 234, 478, 180, 72, "Station", "Name and IP", on_net_nav, NULL);
+        Btn netb = make_btn(v, 190, 478, 130, 72, "Station", "Network IP", on_net_nav, NULL);
         tone(&netb, T_AMBER);
     }
-    make_btn(v, 426, 478, 170, 72, "Power", "Battery", on_power, NULL);
+    make_btn(v, 328, 478, 130, 72, "Power", "Battery", on_power, NULL);
+    {
+        Btn secb = make_btn(v, 466, 478, 150, 72, "Security", "Key and PIN", on_security_nav, NULL);
+        tone(&secb, T_TEAL);
+    }
     card_at(v, 664, 92, 336, 300, C_SURF, 20);
     label_at(v, 688, 116, &lv_font_montserrat_14, C_AMBER, "THIS STATION");
     s_id_name = label_at(v, 688, 148, &lv_font_montserrat_28, C_TEXT, "");
@@ -2867,6 +2974,45 @@ static void build_net(lv_obj_t *v) {
     lv_obj_move_foreground(s_net_kb);
 }
 
+static void build_security(lv_obj_t *v) {
+    Btn save;
+    Btn back;
+    label_at(v, 32, 82, &lv_font_montserrat_36, C_TEXT, "Security");
+    label_at(v, 32, 126, &lv_font_montserrat_16, C_MUTED,
+             "Protect station-to-station traffic and the administration page.");
+    label_at(v, 32, 174, &lv_font_montserrat_14, C_TEAL, "SHARED ENCRYPTION KEY");
+    s_sec_key_ta = lv_textarea_create(v);
+    lv_obj_set_pos(s_sec_key_ta, 32, 198);
+    lv_obj_set_size(s_sec_key_ta, 960, 52);
+    style_ta(s_sec_key_ta);
+    lv_textarea_set_one_line(s_sec_key_ta, true);
+    lv_textarea_set_max_length(s_sec_key_ta, IC_KEY_LEN);
+    lv_textarea_set_placeholder_text(s_sec_key_ta, "Exactly 16 printable characters");
+    lv_obj_add_event_cb(s_sec_key_ta, on_security_ta, LV_EVENT_ALL, NULL);
+    label_at(v, 32, 266, &lv_font_montserrat_14, C_TEAL, "WEB ADMIN PIN");
+    s_sec_pin_ta = lv_textarea_create(v);
+    lv_obj_set_pos(s_sec_pin_ta, 32, 290);
+    lv_obj_set_size(s_sec_pin_ta, 520, 52);
+    style_ta(s_sec_pin_ta);
+    lv_textarea_set_one_line(s_sec_pin_ta, true);
+    lv_textarea_set_max_length(s_sec_pin_ta, IC_PIN_LEN);
+    lv_textarea_set_placeholder_text(s_sec_pin_ta, "4–8 letters or digits");
+    lv_obj_add_event_cb(s_sec_pin_ta, on_security_ta, LV_EVENT_ALL, NULL);
+    s_sec_err = label_at(v, 576, 304, &lv_font_montserrat_16, C_MUTED, "");
+    clip_label(s_sec_err, 416);
+    save = make_btn(v, 584, 354, 196, 52, "Save & reboot", "Apply security", on_security_save, NULL);
+    tone(&save, T_AMBER);
+    back = make_btn(v, 796, 354, 196, 52, "Back", "Settings", on_back_setup, NULL);
+    tone(&back, T_TEAL);
+    s_sec_kb = lv_keyboard_create(v);
+    lv_obj_set_pos(s_sec_kb, 0, 424);
+    lv_obj_set_size(s_sec_kb, PANEL_W, 176);
+    style_keyboard(s_sec_kb);
+    lv_keyboard_set_mode(s_sec_kb, LV_KEYBOARD_MODE_TEXT_LOWER);
+    lv_keyboard_set_textarea(s_sec_kb, s_sec_key_ta);
+    lv_obj_move_foreground(s_sec_kb);
+}
+
 static void build_splash(void) {
     int i;
     static const int ys[] = {340, 380, 420, 460};
@@ -2941,6 +3087,7 @@ void ui_lvgl_build(void) {
     build_power(s_views[SCR_POWER]);
     build_wifi(s_views[SCR_WIFI]);
     build_net(s_views[SCR_NET]);
+    build_security(s_views[SCR_SECURITY]);
     build_bar();
     lv_scr_load(s_splash_scr);
     s_on_app = false;
