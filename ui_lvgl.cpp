@@ -23,34 +23,34 @@
 
 static const char *TAG = "ic_lvgl";
 
-static const uint32_t C_BG = 0x0E1628;
-static const uint32_t C_BAR = 0x121E36;
-static const uint32_t C_SURF = 0x1A2A4A;
-static const uint32_t C_SURF2 = 0x24385F;
-static const uint32_t C_LINE = 0x3E5A8A;
-static const uint32_t C_TEXT = 0xF5F8FC;
-static const uint32_t C_MUTED = 0xA9B8D0;
-static const uint32_t C_AMBER = 0xFFB020;
-static const uint32_t C_INK = 0x1A1204;
-static const uint32_t C_GREEN = 0x3DDC97;
-static const uint32_t C_RED = 0xFF5D73;
-static const uint32_t C_TEAL = 0x3EC8E0;
-static const uint32_t C_PRESS = 0x2C4A78;
-static const uint32_t C_TEAL_BG = 0x12343C;
-static const uint32_t C_CALL_BG = 0x143228;
-static const uint32_t C_WARM = 0x3A2A12;
-static const uint32_t C_ALERT = 0x3A1824;
-static const uint32_t C_INK_RED = 0x2A0C12;
-static const uint32_t C_SUB_RED = 0x7A3040;
-static const uint32_t C_SUB_AMBER = 0x7A5410;
-static const uint32_t C_OFF = 0x6E7E98;
-static const uint32_t C_DIM = 0x5A6A84;
-static const uint32_t C_TEAL_INK = 0x1A6070;
-static const uint32_t C_CREAM = 0xE7EEF8;
-static const uint32_t C_KEY = 0xF4F7FB;
-static const uint32_t C_KEY_INK = 0x122033;
-static const uint32_t C_ST_BG[4] = {0x3A2430, 0x12343C, 0x143228, 0x1A2748};
-static const uint32_t C_ST_EDGE[4] = {0xFF6B6B, 0x3EC8E0, 0x3DDC97, 0x6AA4FF};
+static const uint32_t C_BG = 0xF3F6FA;
+static const uint32_t C_BAR = 0xFFFFFF;
+static const uint32_t C_SURF = 0xFFFFFF;
+static const uint32_t C_SURF2 = 0xEAF0F7;
+static const uint32_t C_LINE = 0xD9E2EC;
+static const uint32_t C_TEXT = 0x18263A;
+static const uint32_t C_MUTED = 0x65758B;
+static const uint32_t C_AMBER = 0x315BD6;
+static const uint32_t C_INK = 0xFFFFFF;
+static const uint32_t C_GREEN = 0x169B72;
+static const uint32_t C_RED = 0xD94D5B;
+static const uint32_t C_TEAL = 0x2585A6;
+static const uint32_t C_PRESS = 0xDCE7F7;
+static const uint32_t C_TEAL_BG = 0xE6F3F7;
+static const uint32_t C_CALL_BG = 0xE5F5EE;
+static const uint32_t C_WARM = 0xFFF2D8;
+static const uint32_t C_ALERT = 0xFCECEF;
+static const uint32_t C_INK_RED = 0xFFFFFF;
+static const uint32_t C_SUB_RED = 0x873945;
+static const uint32_t C_SUB_AMBER = 0x2549B1;
+static const uint32_t C_OFF = 0x98A5B5;
+static const uint32_t C_DIM = 0xA5B1C0;
+static const uint32_t C_TEAL_INK = 0x226A82;
+static const uint32_t C_CREAM = 0xFFFFFF;
+static const uint32_t C_KEY = 0xFFFFFF;
+static const uint32_t C_KEY_INK = 0x203047;
+static const uint32_t C_ST_BG[4] = {0xFCECEF, 0xE8F3FC, 0xE8F5EF, 0xF0ECFC};
+static const uint32_t C_ST_EDGE[4] = {0xD94D5B, 0x2585A6, 0x169B72, 0x7962CE};
 
 enum {
     SCR_SPLASH = 0,
@@ -383,6 +383,12 @@ static lv_obj_t *card_at(lv_obj_t *parent, int x, int y, int w, int h, uint32_t 
     lv_obj_set_style_bg_color(o, lv_color_hex(bg), 0);
     lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(o, radius, 0);
+    if (radius >= 16) {
+        lv_obj_set_style_shadow_width(o, 14, 0);
+        lv_obj_set_style_shadow_color(o, lv_color_hex(0xC9D4E2), 0);
+        lv_obj_set_style_shadow_opa(o, LV_OPA_20, 0);
+        lv_obj_set_style_shadow_ofs_y(o, 4, 0);
+    }
     lv_obj_clear_flag(o, LV_OBJ_FLAG_CLICKABLE);
     return o;
 }
@@ -500,8 +506,12 @@ static Btn make_btn(lv_obj_t *parent, int x, int y, int w, int h, const char *ti
     lv_obj_set_pos(b.btn, x, y);
     lv_obj_set_size(b.btn, w, h);
     plain(b.btn);
-    lv_obj_set_style_radius(b.btn, 16, 0);
+    lv_obj_set_style_radius(b.btn, 22, 0);
     lv_obj_set_style_bg_opa(b.btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_shadow_width(b.btn, 10, 0);
+    lv_obj_set_style_shadow_color(b.btn, lv_color_hex(0xC9D4E2), 0);
+    lv_obj_set_style_shadow_opa(b.btn, LV_OPA_20, 0);
+    lv_obj_set_style_shadow_ofs_y(b.btn, 3, 0);
     lv_obj_set_flex_flow(b.btn, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(b.btn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_row(b.btn, 2, 0);
@@ -872,7 +882,7 @@ static void style_keyboard(lv_obj_t *kb) {
     if (!kb) {
         return;
     }
-    lv_obj_set_style_bg_color(kb, lv_color_hex(0x0B1220), 0);
+    lv_obj_set_style_bg_color(kb, lv_color_hex(C_SURF2), 0);
     lv_obj_set_style_bg_opa(kb, LV_OPA_COVER, 0);
     lv_obj_set_style_pad_all(kb, 6, 0);
     lv_obj_set_style_pad_row(kb, 4, 0);
@@ -896,7 +906,7 @@ static void style_keyboard(lv_obj_t *kb) {
 }
 
 static void style_ta(lv_obj_t *ta) {
-    lv_obj_set_style_bg_color(ta, lv_color_hex(C_SURF2), 0);
+    lv_obj_set_style_bg_color(ta, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_bg_opa(ta, LV_OPA_COVER, 0);
     lv_obj_set_style_text_color(ta, lv_color_hex(C_TEXT), 0);
     lv_obj_set_style_text_font(ta, &lv_font_montserrat_20, 0);
