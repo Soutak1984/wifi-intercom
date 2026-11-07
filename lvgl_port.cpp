@@ -141,7 +141,9 @@ bool lvgl_port_start(void) {
     s_off = (uint16_t *)fb1;
 
     lv_init();
-    lv_disp_draw_buf_init(&s_draw_buf, (lv_color_t *)fb0, (lv_color_t *)fb1,
+    /* The RGB panel starts scanning framebuffer 0. Give LVGL framebuffer 1
+     * first so its initial draw never touches the live scanout buffer. */
+    lv_disp_draw_buf_init(&s_draw_buf, (lv_color_t *)fb1, (lv_color_t *)fb0,
                           (uint32_t)PANEL_W * PANEL_H);
     lv_disp_drv_init(&s_disp_drv);
     s_disp_drv.hor_res = PANEL_W;
