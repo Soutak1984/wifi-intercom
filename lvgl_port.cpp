@@ -17,10 +17,6 @@
  * appears in one frame. A slider only touches the buffer already on glass,
  * and does not wait for a DMA switch. */
 
-static lv_color_t *s_partial = nullptr;
-static uint16_t *s_shown = nullptr;
-static uint16_t *s_off = nullptr;
-static bool s_flip = false;
 static lv_disp_t *s_disp = nullptr;
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_disp_drv_t s_disp_drv;
@@ -34,104 +30,32 @@ static uint32_t s_touch_ms = 0;
 static bool s_touch_held = false;
 
 static void writeback(void *p, size_t bytes) {
-    if (!p || bytes == 0) {
-        return;
-    }
+    if (!p || bytes == 0) return;
     esp_cache_msync(p, bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
 }
 
 static void writeback_area(uint16_t *base, const lv_area_t *area) {
-    if (!base || area->x2 < area->x1 || area->y2 < area->y1) {
-        return;
-    }
-    size_t start = (size_t)area->y1 * PANEL_W + area->x1;
-    size_t end = (size_t)area->y2 * PANEL_W + area->x2 + 1;
-    writeback(&base[start], (end - start) * sizeof(uint16_t));
-}
-
-static void blit_partial(uint16_t *fb, const lv_area_t *area, const lv_color_t *src) {
-    int w = area->x2 - area->x1 + 1;
-    if (w <= 0 || area->y2 < area->y1 || !fb || !src) {
-        return;
-    }
+    if (!base || area->x2 < area->x1 || area->y2 < area->y1) return;
     for (int y = area->y1; y <= area->y2; y++) {
-        memcpy(&fb[(size_t)y * PANEL_W + area->x1], src, (size_t)w * sizeof(lv_color_t));
-        src += w;
+        size_t start = (size_t)y * PANEL_W + area->x1;
+        size_t bytes = (size_t)(area->x2 - area->x1 + 1) * sizeof(uint16_t);
+        writeback(&base[start], bytes);
     }
 }
 
-static bool area_covers_screen(const lv_area_t *area) {
-    return area->x1 <= 0 && area->y1 <= 0 && area->x2 >= PANEL_W - 1 && area->y2 >= PANEL_H - 1;
-}
-
-static void render_start_cb(lv_disp_drv_t *drv) {
-    uint16_t i;
-    (void)drv;
-    s_flip = false;
-    if (!s_disp || !s_off || !s_shown) {
-        return;
-    }
-    for (i = 0; i < s_disp->inv_p; i++) {
-        if (s_disp->inv_area_joined[i]) {
-            continue;
-        }
-        if (area_covers_screen(&s_disp->inv_areas[i])) {
-            s_flip = true;
-            return;
-        }
-    }
-}
-
+/* LVGL direct mode owns the two complete RGB framebuffers. It renders into
+ * the back buffer, synchronizes invalidated regions between buffers, then
+ * hands the finished framebuffer to the RGB panel at the frame boundary. */
 static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
-    uint16_t *dst = s_flip ? s_off : s_shown;
-    blit_partial(dst, area, color_map);
-    writeback_area(dst, area);
-    if (s_flip && lv_disp_flush_is_last(drv)) {
-        /* Hand the finished page to the LCD DMA. The glass keeps the
-         * previous page until this returns. */
-        if (panel_7b_draw(s_off)) {
-            uint16_t *swap = s_shown;
-            s_shown = s_off;
-            s_off = swap;
+    if (color_map && area) {
+        writeback_area((uint16_t *)color_map, area);
+    }
+    if (lv_disp_flush_is_last(drv) && color_map) {
+        if (!panel_7b_draw(color_map)) {
+            Serial0.println("lvgl: RGB framebuffer switch failed");
         }
-        s_flip = false;
     }
     lv_disp_flush_ready(drv);
-}
-
-static lv_color_t *alloc_partial(uint32_t *out_px) {
-    size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-    size_t bytes;
-    lv_color_t *buf;
-    /* Drawing the page in internal RAM is much faster than drawing it in
-     * PSRAM. 40 lines is 80 KB and previously left no room for the UI task,
-     * so this is 8 lines (16 KB) and only when a large block is still free. */
-    if (largest > 120u * 1024u) {
-        bytes = (size_t)PANEL_W * 8 * sizeof(lv_color_t);
-        bytes = (bytes + 63u) & ~63u;
-        buf = (lv_color_t *)heap_caps_aligned_alloc(64, bytes, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-        if (buf) {
-            *out_px = (uint32_t)PANEL_W * 8;
-            Serial0.printf("lvgl draw buffer 8 lines internal, largest %u\n", (unsigned)largest);
-            return buf;
-        }
-    }
-    bytes = (size_t)PANEL_W * 40 * sizeof(lv_color_t);
-    bytes = (bytes + 63u) & ~63u;
-    buf = (lv_color_t *)heap_caps_aligned_alloc(64, bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    if (buf) {
-        *out_px = (uint32_t)PANEL_W * 40;
-        Serial0.println("lvgl draw buffer 40 lines in PSRAM");
-        return buf;
-    }
-    bytes = (size_t)PANEL_W * 8 * sizeof(lv_color_t);
-    bytes = (bytes + 63u) & ~63u;
-    buf = (lv_color_t *)heap_caps_aligned_alloc(64, bytes, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    if (buf) {
-        *out_px = (uint32_t)PANEL_W * 8;
-        Serial0.println("lvgl draw buffer 8 lines internal");
-    }
-    return buf;
 }
 
 static void touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data) {
@@ -169,7 +93,6 @@ static void touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data) {
 bool lvgl_port_start(void) {
     void *fb0 = nullptr;
     void *fb1 = nullptr;
-    uint32_t partial_px = 0;
     if (s_ready) {
         return true;
     }
@@ -191,26 +114,15 @@ bool lvgl_port_start(void) {
     s_off = (uint16_t *)fb1;
 
     lv_init();
-    partial_px = 0;
-    s_partial = alloc_partial(&partial_px);
-    if (!s_partial || partial_px == 0) {
-        Serial0.println("lvgl draw buffer alloc failed");
-        return false;
-    }
-
-    lv_disp_draw_buf_init(&s_draw_buf, s_partial, nullptr, partial_px);
+    lv_disp_draw_buf_init(&s_draw_buf, (lv_color_t *)fb0, (lv_color_t *)fb1,
+                          (uint32_t)PANEL_W * PANEL_H);
     lv_disp_drv_init(&s_disp_drv);
     s_disp_drv.hor_res = PANEL_W;
     s_disp_drv.ver_res = PANEL_H;
     s_disp_drv.flush_cb = flush_cb;
     s_disp_drv.draw_buf = &s_draw_buf;
-    s_disp_drv.render_start_cb = render_start_cb;
-    s_disp_drv.direct_mode = 0;
-    /* Always render a complete page into the back framebuffer. Partial refreshes
-     * were writing into the active RGB scan buffer, producing visible tearing.
-     * LVGL's full_refresh makes render_start_cb select the back buffer; the
-     * completed frame is swapped only after the final flush. */
-    s_disp_drv.full_refresh = 1;
+    s_disp_drv.direct_mode = 1;
+    s_disp_drv.full_refresh = 0;
     s_disp = lv_disp_drv_register(&s_disp_drv);
     if (!s_disp) {
         Serial0.println("lvgl display register failed");
