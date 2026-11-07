@@ -142,8 +142,6 @@ bool lvgl_port_start(void) {
         return false;
     }
     /* The panel starts on framebuffer 0. Full pages land in the other one. */
-    s_shown = (uint16_t *)fb0;
-    s_off = (uint16_t *)fb1;
 
     lv_init();
     /* The RGB panel starts scanning framebuffer 0. Give LVGL framebuffer 1
