@@ -1699,7 +1699,7 @@ static void paint_floor(const Snap *s) {
     tone(&s_fcall, T_AMBER);
     if (s->view.mic_armed) {
         mic_sub = "Armed, not sending";
-        mic_tone = T_AMBER;
+        mic_tone = T_SURFACE;
         set_text(s_floor_title, "Microphone armed");
     } else {
         set_text(s_floor_title, "Microphone off");
@@ -2541,9 +2541,9 @@ static void build_home(lv_obj_t *v) {
     style_slider(s_home_slider);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_RELEASED, NULL);
-    s_home_headset = label_at(strip, 600, 44, &lv_font_montserrat_14, C_GREEN, "HEADSET WAITING");
+    s_home_headset = label_at(strip, 600, 26, &lv_font_montserrat_14, C_GREEN, "HEADSET WAITING");
     lv_obj_set_style_text_letter_space(s_home_headset, 1, 0);
-    s_home_status = label_at(strip, 600, 76, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
+    s_home_status = label_at(strip, 600, 58, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
     clip_label(s_home_status, 250);
     label_at(strip, 24, 112, &lv_font_montserrat_14, C_MUTED,
              "Tap a station, then Call. Your own tile is not a destination.");
@@ -2596,13 +2596,13 @@ static void build_calling(lv_obj_t *v) {
     lv_obj_t *core;
     int i;
     static const int radii[] = {50, 34, 18};
-    label_at(left, 32, 28, &lv_font_montserrat_14, C_AMBER, "CALLING");
+    label_at(left, 32, 40, &lv_font_montserrat_14, C_AMBER, "CALLING");
     s_call_name = label_at(left, 32, 72, &lv_font_montserrat_48, C_TEXT, "");
     clip_label(s_call_name, 400);
-    s_call_sub = label_at(left, 32, 150, &lv_font_montserrat_22, C_MUTED, "");
+    s_call_sub = label_at(left, 32, 166, &lv_font_montserrat_22, C_MUTED, "");
     clip_label(s_call_sub, 420);
-    label_at(left, 32, 240, &lv_font_montserrat_20, C_TEXT, "The far station answers by itself.");
-    label_at(left, 32, 274, &lv_font_montserrat_16, C_MUTED, "Its speaker comes on. Its microphone stays off.");
+    label_at(left, 32, 252, &lv_font_montserrat_20, C_TEXT, "The far station answers by itself.");
+    label_at(left, 32, 288, &lv_font_montserrat_16, C_MUTED, "Its speaker comes on. Its microphone stays off.");
     for (i = 0; i < 3; i++) {
         s_ring[i] = ring_at(v, radii[i]);
     }
@@ -2623,15 +2623,15 @@ static void build_muted(lv_obj_t *v) {
     lv_obj_t *vol;
     lv_obj_t *foot;
     lv_obj_t *mark;
-    mark = dot_at(left, 24, 18, 10);
+    mark = dot_at(left, 24, 28, 10);
     lv_obj_set_style_bg_color(mark, lv_color_hex(C_GREEN), 0);
-    label_at(left, 44, 12, &lv_font_montserrat_14, C_GREEN, "CONNECTED");
+    label_at(left, 44, 22, &lv_font_montserrat_14, C_GREEN, "CONNECTED");
     s_mu_name = label_at(left, 24, 64, &lv_font_montserrat_48, C_TEXT, "");
     clip_label(s_mu_name, 420);
     s_mu_clock = label_at(left, 24, 140, &lv_font_montserrat_22, C_MUTED, "0:00");
-    s_mu_hear = label_at(left, 24, 210, &lv_font_montserrat_22, C_TEXT, "You can hear them.");
+    s_mu_hear = label_at(left, 24, 222, &lv_font_montserrat_22, C_TEXT, "You can hear them.");
     clip_label(s_mu_hear, 420);
-    label_at(left, 24, 248, &lv_font_montserrat_16, C_MUTED, "They cannot hear you yet.");
+    label_at(left, 24, 258, &lv_font_montserrat_16, C_MUTED, "They cannot hear you yet.");
     s_mu_talk = make_btn(v, 514, 96, 486, 180, "Talk", "Microphone is off", on_mic, NULL);
     s_mu_end = make_btn(v, 514, 292, 232, 104, "End", "Hang up", on_end, NULL);
     vol = card_at(v, 762, 292, 238, 104, C_SURF2, 16);
@@ -2657,11 +2657,11 @@ static void build_live(lv_obj_t *v) {
     int i;
     static const int heights[] = {10, 17, 24, 31};
     stroke(left, C_RED, 2);
-    label_at(left, 24, 20, &lv_font_montserrat_14, C_RED, "TRANSMITTING");
+    label_at(left, 24, 28, &lv_font_montserrat_14, C_RED, "TRANSMITTING");
     s_live_name = label_at(left, 24, 64, &lv_font_montserrat_48, C_TEXT, "");
     clip_label(s_live_name, 420);
     s_live_clock = label_at(left, 24, 140, &lv_font_montserrat_22, C_MUTED, "0:00");
-    label_at(left, 24, 190, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
+    label_at(left, 24, 200, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
     for (i = 0; i < 16; i++) {
         int h = heights[i & 3];
         s_live_bar[i] = lv_obj_create(left);
@@ -2677,8 +2677,8 @@ static void build_live(lv_obj_t *v) {
     s_live_end = make_btn(v, 514, 292, 486, 104, "End", "Hang up both sides", on_end, NULL);
     foot = card_at(v, 24, 416, 976, 160, C_SURF, 18);
     label_at(foot, 24, 28, &lv_font_montserrat_22, C_TEXT, "They hear you. Their microphone does not follow yours.");
-    label_at(foot, 24, 72, &lv_font_montserrat_16, C_MUTED, "Mute frames are silence, so the far speaker stays quiet without a click.");
-    label_at(foot, 24, 104, &lv_font_montserrat_16, C_MUTED, "The live state is the only time voice leaves this station.");
+    label_at(foot, 24, 76, &lv_font_montserrat_16, C_MUTED, "Mute frames are silence, so the far speaker stays quiet without a click.");
+    label_at(foot, 24, 108, &lv_font_montserrat_16, C_MUTED, "The live state is the only time voice leaves this station.");
 }
 
 static void build_page(lv_obj_t *v) {
@@ -2723,9 +2723,9 @@ static void build_rx(lv_obj_t *v) {
     lv_obj_t *foot;
     Btn leave;
     stroke(box, C_TEAL, 2);
-    label_at(box, 32, 36, &lv_font_montserrat_16, C_TEAL, "RECEPTION IS PAGING");
-    s_rx_title = label_at(box, 32, 88, &lv_font_montserrat_48, C_TEXT, "Speaker on");
-    s_rx_sub = label_at(box, 32, 168, &lv_font_montserrat_22, C_MUTED, "");
+    label_at(box, 32, 48, &lv_font_montserrat_16, C_TEAL, "RECEPTION IS PAGING");
+    s_rx_title = label_at(box, 32, 80, &lv_font_montserrat_48, C_TEXT, "Speaker on");
+    s_rx_sub = label_at(box, 32, 174, &lv_font_montserrat_22, C_MUTED, "");
     clip_label(s_rx_sub, 900);
     s_rx_lock = make_btn(v, 24, 376, 480, 120, "Mic locked", "Stays off during a page", NULL, NULL);
     tone(&s_rx_lock, T_DISABLED);
@@ -2740,10 +2740,10 @@ static void build_busy(lv_obj_t *v) {
     lv_obj_t *box = card_at(v, 24, 104, 976, 280, C_SURF, 22);
     lv_obj_t *foot;
     Btn back;
-    s_busy_title = label_at(box, 32, 36, &lv_font_montserrat_48, C_TEXT, "Busy");
+    s_busy_title = label_at(box, 32, 20, &lv_font_montserrat_48, C_TEXT, "Busy");
     clip_label(s_busy_title, 900);
     label_at(box, 32, 112, &lv_font_montserrat_22, C_MUTED, "The call was not started. Their conversation stays up.");
-    s_busy_line = label_at(box, 32, 180, &lv_font_montserrat_20, C_TEXT, "");
+    s_busy_line = label_at(box, 32, 196, &lv_font_montserrat_20, C_TEXT, "");
     clip_label(s_busy_line, 900);
     s_busy_alt[0] = make_btn(v, 24, 412, 312, 100, "Station", "Online", on_busy_pick, (void *)(intptr_t)0);
     s_busy_alt[1] = make_btn(v, 356, 412, 312, 100, "Station", "Offline", on_busy_pick, (void *)(intptr_t)1);
@@ -2759,8 +2759,8 @@ static void build_link(lv_obj_t *v) {
     int i;
     static const int xs[] = {24, 272, 520, 768};
     stroke(box, C_RED, 2);
-    label_at(box, 32, 36, &lv_font_montserrat_16, C_RED, "WI-FI DOWN");
-    s_link_ssid = label_at(box, 32, 84, &lv_font_montserrat_48, C_TEXT, "Wi-Fi name not set");
+    label_at(box, 32, 48, &lv_font_montserrat_16, C_RED, "WI-FI DOWN");
+    s_link_ssid = label_at(box, 32, 76, &lv_font_montserrat_48, C_TEXT, "Wi-Fi name not set");
     clip_label(s_link_ssid, 880);
     s_link_msg = label_at(box, 32, 168, &lv_font_montserrat_20, C_MUTED, "");
     clip_label(s_link_msg, 880);
@@ -2787,8 +2787,8 @@ static void build_audio(lv_obj_t *v) {
     Btn blocked;
     Btn test;
     stroke(box, C_RED, 2);
-    label_at(box, 32, 36, &lv_font_montserrat_16, C_RED, "HEADSET");
-    label_at(box, 32, 84, &lv_font_montserrat_48, C_TEXT, "No headset");
+    label_at(box, 32, 48, &lv_font_montserrat_16, C_RED, "HEADSET");
+    label_at(box, 32, 76, &lv_font_montserrat_48, C_TEXT, "No headset");
     label_at(box, 32, 168, &lv_font_montserrat_22, C_MUTED, "Plug the adapter into the USB socket, not the UART socket.");
     label_at(box, 32, 208, &lv_font_montserrat_16, C_TEXT, "Calls and pages stay closed until both mic and headphone streams are up.");
     blocked = make_btn(v, 24, 408, 312, 100, "Call", "Blocked", NULL, NULL);
