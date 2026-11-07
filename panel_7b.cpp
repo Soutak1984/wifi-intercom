@@ -172,7 +172,10 @@ static bool rgb_start(void) {
         .data_width = 16,
         .bits_per_pixel = 16,
         .num_fbs = 2,
-        .bounce_buffer_size_px = PANEL_W * 10,
+        /* 20 lines gives the PSRAM-to-DRAM bounce-buffer DMA more time
+         * between refills. A missed refill can desynchronize RGB scanout
+         * and make the entire image jump vertically. */
+        .bounce_buffer_size_px = PANEL_W * 20,
         .sram_trans_align = 4,
         .psram_trans_align = 64,
         .hsync_gpio_num = PIN_LCD_HSYNC,
