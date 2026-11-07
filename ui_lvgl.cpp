@@ -1586,13 +1586,13 @@ static void paint_dir_card(Card *c, const Snap *s, int index) {
     p = &s->view.dir[index];
     self = p->id == s->view.self_id;
     sel = !self && p->id != 0 && p->id == s->view.selected;
-    bg = (index >= 0 && index < 4) ? C_ST_BG[index] : C_SURF;
-    border = (index >= 0 && index < 4) ? C_ST_EDGE[index] : C_LINE;
+    bg = C_SURF;
+    border = C_LINE;
     if (sel) {
         bg = C_WARM;
         border = C_AMBER;
     } else if (self) {
-        border = C_GREEN;
+        bg = C_SURF2;
     }
     tag = "OFFLINE";
     tagc = C_OFF;
@@ -2710,7 +2710,7 @@ static void build_page_all(lv_obj_t *v) {
     s_pa_title = label_at(v, 24, 76, &lv_font_montserrat_36, C_TEXT, "All free floors");
     label_at(v, 24, 124, &lv_font_montserrat_16, C_MUTED, "Each floor gets its own stream. Busy floors are skipped.");
     for (i = 0; i < 3; i++) {
-        s_pa_card[i] = make_info_card(v, xs[i], 192, 296, 152);
+        s_pa_card[i] = make_info_card(v, xs[i], 176, 312, 180);
     }
     s_pa_talk = make_btn(v, 24, 376, 480, 100, "Talk", "Floors hear silence until you do", on_mic, NULL);
     s_pa_end = make_btn(v, 520, 376, 480, 100, "End page", "All floors drop", on_end, NULL);
@@ -2772,10 +2772,9 @@ static void build_link(lv_obj_t *v) {
     label_at(foot, 24, 10, &lv_font_montserrat_16, C_TEXT, "Battery is separate from the radio.");
     s_link_foot = label_at(foot, 24, 36, &lv_font_montserrat_14, C_MUTED, "");
     clip_label(s_link_foot, 630);
-    make_btn(v, 720, 506, 136, 70, "Wi-Fi", "Keyboard", on_wifi_nav, NULL);
     {
-        Btn netb = make_btn(v, 864, 506, 136, 70, "Station", "IP", on_net_nav, NULL);
-        tone(&netb, T_AMBER);
+        Btn wifib = make_btn(v, 720, 506, 280, 70, "Set Wi-Fi", "Open network keyboard", on_wifi_nav, NULL);
+        tone(&wifib, T_AMBER);
     }
 }
 
@@ -2801,6 +2800,8 @@ static void build_audio(lv_obj_t *v) {
 
 static void build_setup(lv_obj_t *v) {
     Btn back;
+    lv_obj_t *identity;
+    lv_obj_t *edit_hint;
     card_at(v, 24, 92, 620, 484, C_SURF, 20);
     label_at(v, 52, 100, &lv_font_montserrat_14, C_MUTED, "SPEAKER VOLUME");
     s_setup_vol = lv_textarea_create(v);
@@ -2842,8 +2843,8 @@ static void build_setup(lv_obj_t *v) {
     s_aec_side = label_at(v, 500, 244, &lv_font_montserrat_14, C_TEXT, "40 ms");
     make_btn(v, 52, 290, 80, 64, "-", "", on_aec_step, (void *)(intptr_t)-20);
     s_aec_lbl = lv_textarea_create(v);
-    lv_obj_set_pos(s_aec_lbl, 180, 292);
-    lv_obj_set_size(s_aec_lbl, 160, 40);
+    lv_obj_set_pos(s_aec_lbl, 148, 290);
+    lv_obj_set_size(s_aec_lbl, 280, 64);
     style_ta(s_aec_lbl);
     lv_obj_set_style_pad_hor(s_aec_lbl, 12, 0);
     lv_obj_set_style_pad_ver(s_aec_lbl, 8, 0);
@@ -2855,15 +2856,14 @@ static void build_setup(lv_obj_t *v) {
     label_at(v, 168, 334, &lv_font_montserrat_14, C_MUTED, "Applies while idle");
     make_btn(v, 444, 290, 80, 64, "+", "", on_aec_step, (void *)(intptr_t)20);
     label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL  /  Tap any numeric value above to type");
-    s_setup_meter = meter_bar(v, 52, 396, 540, 16, C_TEAL);
+    s_setup_meter = meter_bar(v, 52, 406, 540, 16, C_TEAL);
     label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
-    make_btn(v, 52, 478, 170, 72, "Audio test", "Local tone", on_test, NULL);
+    make_btn(v, 52, 478, 250, 72, "Audio test", "Idle tone, not sent", on_test, NULL);
     {
-        Btn netb = make_btn(v, 234, 478, 180, 72, "Station", "Name and IP", on_net_nav, NULL);
-        tone(&netb, T_AMBER);
+        Btn powerb = make_btn(v, 318, 478, 250, 72, "Power", "Wi-Fi and battery", on_power, NULL);
+        tone(&powerb, T_SURFACE);
     }
-    make_btn(v, 426, 478, 170, 72, "Power", "Battery", on_power, NULL);
-    card_at(v, 664, 92, 336, 300, C_SURF, 20);
+    identity = card_at(v, 664, 92, 336, 300, C_SURF, 20);
     label_at(v, 688, 116, &lv_font_montserrat_14, C_AMBER, "THIS STATION");
     s_id_name = label_at(v, 688, 148, &lv_font_montserrat_28, C_TEXT, "");
     clip_label(s_id_name, 280);
@@ -2871,7 +2871,11 @@ static void build_setup(lv_obj_t *v) {
     s_id_ip = label_at(v, 688, 226, &lv_font_montserrat_20, C_TEXT, "");
     s_id_gw = label_at(v, 688, 264, &lv_font_montserrat_16, C_MUTED, "");
     s_id_mask = label_at(v, 688, 292, &lv_font_montserrat_16, C_MUTED, "");
-    label_at(v, 688, 332, &lv_font_montserrat_14, C_MUTED, "Edit station for the name and IP.");
+    edit_hint = label_at(v, 688, 332, &lv_font_montserrat_14, C_AMBER, "Edit station name and IP");
+    lv_obj_add_flag(edit_hint, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(edit_hint, on_net_nav, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_flag(identity, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(identity, on_net_nav, LV_EVENT_CLICKED, NULL);
     back = make_btn(v, 860, 108, 116, 40, "Back", "", on_back_home, NULL);
     lv_obj_set_style_text_font(back.title, &lv_font_montserrat_16, 0);
     s_warn = card_at(v, 664, 408, 336, 168, C_WARM, 20);
@@ -2898,8 +2902,8 @@ static void build_power(lv_obj_t *v) {
     card_at(v, 24, 92, 470, 320, C_SURF, 22);
     label_at(v, 48, 112, &lv_font_montserrat_14, C_AMBER, "BATTERY");
     icon = lv_obj_create(v);
-    lv_obj_set_pos(icon, 48, 156);
-    lv_obj_set_size(icon, 200, 90);
+    lv_obj_set_pos(icon, 48, 160);
+    lv_obj_set_size(icon, 250, 110);
     plain(icon);
     lv_obj_set_style_bg_opa(icon, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_color(icon, lv_color_hex(C_TEXT), 0);
@@ -2908,15 +2912,15 @@ static void build_power(lv_obj_t *v) {
     lv_obj_clear_flag(icon, LV_OBJ_FLAG_CLICKABLE);
     s_pwr_fill = lv_obj_create(icon);
     lv_obj_set_pos(s_pwr_fill, 14, 14);
-    lv_obj_set_size(s_pwr_fill, 0, 62);
+    lv_obj_set_size(s_pwr_fill, 0, 82);
     plain(s_pwr_fill);
     lv_obj_set_style_bg_color(s_pwr_fill, lv_color_hex(C_GREEN), 0);
     lv_obj_set_style_bg_opa(s_pwr_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(s_pwr_fill, 10, 0);
     lv_obj_clear_flag(s_pwr_fill, LV_OBJ_FLAG_CLICKABLE);
     nub = lv_obj_create(v);
-    lv_obj_set_pos(nub, 248, 184);
-    lv_obj_set_size(nub, 14, 34);
+    lv_obj_set_pos(nub, 298, 196);
+    lv_obj_set_size(nub, 16, 38);
     plain(nub);
     lv_obj_set_style_bg_color(nub, lv_color_hex(C_TEXT), 0);
     lv_obj_set_style_bg_opa(nub, LV_OPA_COVER, 0);
@@ -2934,10 +2938,9 @@ static void build_power(lv_obj_t *v) {
     s_pwr_pass = label_at(v, 538, 248, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_pwr_pass, 430);
     label_at(v, 538, 286, &lv_font_montserrat_14, C_MUTED, "2.4 GHz only. Client isolation must be off.");
-    make_btn(v, 538, 344, 210, 52, "Wi-Fi", "Keyboard", on_wifi_nav, NULL);
     {
-        Btn netb = make_btn(v, 760, 344, 210, 52, "Station", "Name and IP", on_net_nav, NULL);
-        tone(&netb, T_AMBER);
+        Btn wifib = make_btn(v, 538, 344, 240, 52, "Set Wi-Fi", "Change network", on_wifi_nav, NULL);
+        tone(&wifib, T_AMBER);
     }
     bat = card_at(v, 24, 428, 976, 148, C_SURF, 18);
     (void)bat;
