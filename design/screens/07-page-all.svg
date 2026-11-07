@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="600" viewBox="0 0 1024 600">
+<rect width="1024" height="600" fill="#14110E"/>
+<rect x="0" y="0" width="1024" height="72" rx="0" fill="#100E0C"/>
+<rect x="0" y="71" width="1024" height="1" rx="0" fill="#4A3E34"/>
+<rect x="24" y="28" width="10" height="10" rx="2" fill="#E4A04A"/>
+<text x="44" y="46" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="start" letter-spacing="1.2">RECEPTION</text>
+<text x="180" y="46" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="500" text-anchor="start">100</text>
+<rect x="422.0" y="18" width="180" height="36" rx="18" fill="#1C2C2A"/>
+<text x="512" y="42" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle" letter-spacing="1.4">PAGE ALL</text>
+<rect x="780" y="39" width="5" height="5" rx="1" fill="#E6D7C3"/>
+<rect x="788" y="35" width="5" height="9" rx="1" fill="#E6D7C3"/>
+<rect x="796" y="31" width="5" height="13" rx="1" fill="#E6D7C3"/>
+<rect x="804" y="26" width="5" height="18" rx="1" fill="#E6D7C3"/>
+<text x="818" y="42" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" text-anchor="start">-46</text>
+<rect x="888" y="28" width="28" height="14" rx="3" fill="#14110E" stroke="#F6F1E8" stroke-width="1.5"/>
+<rect x="916" y="32" width="3" height="6" rx="1" fill="#F6F1E8"/>
+<rect x="891" y="31" width="16" height="8" rx="1" fill="#8FB573"/>
+<text x="928" y="42" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" text-anchor="start">76%</text>
+<text x="24" y="112" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="600" text-anchor="start">All free floors</text>
+<text x="24" y="148" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="500" text-anchor="start">Each floor gets its own stream. Busy floors are skipped.</text>
+<rect x="24" y="176" width="312" height="180" rx="18" fill="#1C2C2A" stroke="#7EAEA4" stroke-width="2"/>
+<rect x="44" y="198" width="10" height="10" rx="5" fill="#7EAEA4"/>
+<text x="62" y="208" fill="#7EAEA4" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" letter-spacing="1.2">HEARING</text>
+<text x="44" y="264" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" text-anchor="start">Floor 1</text>
+<text x="44" y="300" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="500" text-anchor="start">101</text>
+<text x="44" y="328" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="500" text-anchor="start">192.168.1.101</text>
+<rect x="356" y="176" width="312" height="180" rx="18" fill="#221C17" stroke="#4A3E34" stroke-width="1"/>
+<rect x="376" y="198" width="10" height="10" rx="5" fill="#E4A04A"/>
+<text x="394" y="208" fill="#E4A04A" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" letter-spacing="1.2">IN A CALL</text>
+<text x="376" y="264" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" text-anchor="start">Floor 2</text>
+<text x="376" y="300" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="500" text-anchor="start">102</text>
+<text x="376" y="328" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="500" text-anchor="start">Skipped</text>
+<rect x="688" y="176" width="312" height="180" rx="18" fill="#1C2C2A" stroke="#7EAEA4" stroke-width="2"/>
+<rect x="708" y="198" width="10" height="10" rx="5" fill="#7EAEA4"/>
+<text x="726" y="208" fill="#7EAEA4" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" letter-spacing="1.2">HEARING</text>
+<text x="708" y="264" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" text-anchor="start">Floor 3</text>
+<text x="708" y="300" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="500" text-anchor="start">103</text>
+<text x="708" y="328" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="500" text-anchor="start">192.168.1.103</text>
+<rect x="24" y="376" width="480" height="100" rx="16" fill="#E4A04A"/>
+<text x="264.0" y="418.0" fill="#2A1C0A" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Talk</text>
+<text x="264.0" y="450.0" fill="#6A4A16" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="500" text-anchor="middle">Floors hear silence until you do</text>
+<rect x="520" y="376" width="480" height="100" rx="16" fill="#D4654E"/>
+<text x="760.0" y="418.0" fill="#2A100C" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">End page</text>
+<text x="760.0" y="450.0" fill="#6A2E24" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="500" text-anchor="middle">All floors drop</text>
+<rect x="24" y="496" width="976" height="80" rx="16" fill="#221C17"/>
+<text x="48" y="532" fill="#F6F1E8" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="550" text-anchor="start">Floor 2 stays in its private call and does not hear this page.</text>
+<text x="48" y="558" fill="#A89888" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="500" text-anchor="start">Receivers keep their microphones off. Enable Mic on a floor does nothing.</text>
+</svg>
