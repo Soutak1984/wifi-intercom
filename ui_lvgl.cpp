@@ -2521,6 +2521,12 @@ static void build_bar(void) {
         lv_obj_set_style_radius(nub, 1, 0);
         lv_obj_clear_flag(nub, LV_OBJ_FLAG_CLICKABLE);
     }
+    {
+        Btn settings = make_btn(bar, 676, 12, 100, 48, "SETUP", "", on_setup, NULL);
+        tone(&settings, T_TEAL);
+        lv_obj_set_style_radius(settings.btn, 12, 0);
+        lv_obj_set_style_text_font(settings.title, &lv_font_montserrat_14, 0);
+    }
     s_bat_lbl = label_at(bar, 928, 22, &lv_font_montserrat_16, C_TEXT, "USB");
 }
 
