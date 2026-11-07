@@ -206,7 +206,11 @@ bool lvgl_port_start(void) {
     s_disp_drv.draw_buf = &s_draw_buf;
     s_disp_drv.render_start_cb = render_start_cb;
     s_disp_drv.direct_mode = 0;
-    s_disp_drv.full_refresh = 0;
+    /* Always render a complete page into the back framebuffer. Partial refreshes
+     * were writing into the active RGB scan buffer, producing visible tearing.
+     * LVGL's full_refresh makes render_start_cb select the back buffer; the
+     * completed frame is swapped only after the final flush. */
+    s_disp_drv.full_refresh = 1;
     s_disp = lv_disp_drv_register(&s_disp_drv);
     if (!s_disp) {
         Serial0.println("lvgl display register failed");
