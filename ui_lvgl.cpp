@@ -23,30 +23,32 @@
 
 static const char *TAG = "ic_lvgl";
 
-static const uint32_t C_BG = 0x0E1628;
-static const uint32_t C_BAR = 0x121E36;
-static const uint32_t C_SURF = 0x1A2A4A;
-static const uint32_t C_SURF2 = 0x24385F;
-static const uint32_t C_LINE = 0x3E5A8A;
-static const uint32_t C_TEXT = 0xF5F8FC;
-static const uint32_t C_MUTED = 0xA9B8D0;
-static const uint32_t C_AMBER = 0xFFB020;
-static const uint32_t C_INK = 0x1A1204;
-static const uint32_t C_GREEN = 0x3DDC97;
-static const uint32_t C_RED = 0xFF5D73;
-static const uint32_t C_TEAL = 0x3EC8E0;
-static const uint32_t C_PRESS = 0x2C4A78;
-static const uint32_t C_TEAL_BG = 0x12343C;
-static const uint32_t C_CALL_BG = 0x143228;
-static const uint32_t C_WARM = 0x3A2A12;
-static const uint32_t C_ALERT = 0x3A1824;
-static const uint32_t C_INK_RED = 0x2A0C12;
-static const uint32_t C_SUB_RED = 0x7A3040;
-static const uint32_t C_SUB_AMBER = 0x7A5410;
-static const uint32_t C_OFF = 0x6E7E98;
-static const uint32_t C_DIM = 0x5A6A84;
-static const uint32_t C_TEAL_INK = 0x1A6070;
-static const uint32_t C_CREAM = 0xE7EEF8;
+/* New bright control-room theme: clean light surfaces, vivid action colours,
+ * and dark text for legibility on the 7-inch 1024x600 panel. */
+static const uint32_t C_BG = 0xF2F5FA;
+static const uint32_t C_BAR = 0xFFFFFF;
+static const uint32_t C_SURF = 0xFFFFFF;
+static const uint32_t C_SURF2 = 0xE7EDF6;
+static const uint32_t C_LINE = 0xD3DDEB;
+static const uint32_t C_TEXT = 0x17243A;
+static const uint32_t C_MUTED = 0x66758A;
+static const uint32_t C_AMBER = 0xF5A524;
+static const uint32_t C_INK = 0x241805;
+static const uint32_t C_GREEN = 0x13A879;
+static const uint32_t C_RED = 0xE64E69;
+static const uint32_t C_TEAL = 0x079DB0;
+static const uint32_t C_PRESS = 0xDCE6F2;
+static const uint32_t C_TEAL_BG = 0xDDF5F6;
+static const uint32_t C_CALL_BG = 0xDDF5E9;
+static const uint32_t C_WARM = 0xFFF1D6;
+static const uint32_t C_ALERT = 0xFCE8ED;
+static const uint32_t C_INK_RED = 0x421724;
+static const uint32_t C_SUB_RED = 0x8D4658;
+static const uint32_t C_SUB_AMBER = 0x8A5B12;
+static const uint32_t C_OFF = 0x8795A8;
+static const uint32_t C_DIM = 0xA8B3C2;
+static const uint32_t C_TEAL_INK = 0xB9E8EC;
+static const uint32_t C_CREAM = 0xF7F9FC;
 static const uint32_t C_KEY = 0xF4F7FB;
 static const uint32_t C_KEY_INK = 0x122033;
 static const uint32_t C_ST_BG[4] = {0x3A2430, 0x12343C, 0x143228, 0x1A2748};
@@ -557,6 +559,30 @@ static Card make_station(lv_obj_t *parent, int x, int y) {
     c.ident = label_at(c.btn, 20, 100, &lv_font_montserrat_16, C_MUTED, "100");
     c.sub = label_at(c.btn, 20, 136, &lv_font_montserrat_14, C_MUTED, "");
     clip_label(c.sub, 192);
+    return c;
+}
+
+static Card make_station_tile(lv_obj_t *parent, int x, int y, int w, int h) {
+    Card c;
+    memset(&c, 0, sizeof(c));
+    c.btn = lv_btn_create(parent);
+    lv_obj_set_pos(c.btn, x, y);
+    lv_obj_set_size(c.btn, w, h);
+    plain(c.btn);
+    lv_obj_set_style_radius(c.btn, 20, 0);
+    lv_obj_set_style_bg_color(c.btn, lv_color_hex(C_SURF), 0);
+    lv_obj_set_style_bg_color(c.btn, lv_color_hex(C_PRESS), LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(c.btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(c.btn, lv_color_hex(C_LINE), 0);
+    lv_obj_set_style_border_width(c.btn, 1, 0);
+    c.dot = dot_at(c.btn, 18, 20, 12);
+    c.tag = label_at(c.btn, 40, 16, &lv_font_montserrat_14, C_GREEN, "ONLINE");
+    lv_obj_set_style_text_letter_space(c.tag, 1, 0);
+    c.name = label_at(c.btn, 18, 50, &lv_font_montserrat_28, C_TEXT, "Station");
+    clip_label(c.name, w - 36);
+    c.ident = label_at(c.btn, 18, h - 54, &lv_font_montserrat_16, C_MUTED, "100");
+    c.sub = label_at(c.btn, 18, h - 30, &lv_font_montserrat_14, C_MUTED, "Select station");
+    clip_label(c.sub, w - 36);
     return c;
 }
 
@@ -2402,34 +2428,61 @@ static void build_bar(void) {
 }
 
 static void build_home(lv_obj_t *v) {
-    static const int xs[] = {24, 268, 512, 756};
     int i;
-    lv_obj_t *strip;
+    lv_obj_t *panel;
+    lv_obj_t *vol;
+    static const int xs[] = {28, 322};
+    static const int ys[] = {156, 306};
+
+    label_at(v, 28, 88, &lv_font_montserrat_32, C_TEXT, "Station directory");
+    label_at(v, 30, 126, &lv_font_montserrat_16, C_MUTED,
+             "Choose a room to connect. Your own station is automatically disabled.");
+
     for (i = 0; i < 4; i++) {
-        s_home_card[i] = make_station(v, xs[i], 96);
+        s_home_card[i] = make_station_tile(v, xs[i & 1], ys[i >> 1], 274, 136);
         bind_station(&s_home_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
     }
-    s_call_b = make_btn(v, 24, 308, 184, 96, "Call", "Select a station", on_call, NULL);
-    s_mic_b = make_btn(v, 220, 308, 184, 96, "Mic", "Off", on_mic, NULL);
-    s_page_b = make_btn(v, 416, 308, 184, 96, "Page", "Select a floor", on_page, NULL);
-    s_all_b = make_btn(v, 612, 308, 184, 96, "Page all", "101 / 102 / 103", on_page_all, NULL);
-    s_end_b = make_btn(v, 808, 308, 192, 96, "End", "Idle", on_end, NULL);
-    strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
-    label_at(strip, 24, 14, &lv_font_montserrat_14, C_MUTED, "SPEAKER");
-    s_home_vol = label_at(strip, 500, 14, &lv_font_montserrat_14, C_TEXT, "60");
-    s_home_slider = lv_slider_create(strip);
-    lv_obj_set_pos(s_home_slider, 24, 36);
-    lv_obj_set_size(s_home_slider, 520, 28);
+
+    panel = card_at(v, 620, 88, 376, 354, 0xE7F0FA, 22);
+    label_at(panel, 24, 20, &lv_font_montserrat_14, C_TEAL, "QUICK ACTIONS");
+    {
+        Btn b = make_btn(panel, 20, 58, 336, 76, "Call selected", "Start a private hands-free call", on_call, NULL);
+        tone(&b, T_AMBER);
+        s_call_b = b;
+    }
+    {
+        Btn b = make_btn(panel, 20, 146, 160, 76, "Mic", "Talk / mute", on_mic, NULL);
+        tone(&b, T_TEAL);
+        s_mic_b = b;
+    }
+    {
+        Btn b = make_btn(panel, 196, 146, 160, 76, "Page", "Selected room", on_page, NULL);
+        tone(&b, T_SURFACE);
+        s_page_b = b;
+    }
+    {
+        Btn b = make_btn(panel, 20, 234, 160, 76, "Page all", "All free rooms", on_page_all, NULL);
+        tone(&b, T_SURFACE);
+        s_all_b = b;
+    }
+    {
+        Btn b = make_btn(panel, 196, 234, 160, 76, "End", "Stop current call", on_end, NULL);
+        tone(&b, T_RED);
+        s_end_b = b;
+    }
+
+    vol = card_at(v, 28, 460, 968, 116, C_SURF, 20);
+    label_at(vol, 22, 16, &lv_font_montserrat_14, C_MUTED, "SPEAKER VOLUME");
+    s_home_vol = label_at(vol, 520, 14, &lv_font_montserrat_20, C_TEXT, "60%");
+    s_home_slider = lv_slider_create(vol);
+    lv_obj_set_pos(s_home_slider, 22, 48);
+    lv_obj_set_size(s_home_slider, 470, 28);
     style_slider(s_home_slider);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_RELEASED, NULL);
-    s_home_headset = label_at(strip, 576, 28, &lv_font_montserrat_14, C_GREEN, "HEADSET WAITING");
-    lv_obj_set_style_text_letter_space(s_home_headset, 1, 0);
-    s_home_status = label_at(strip, 576, 58, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
-    clip_label(s_home_status, 250);
-    label_at(strip, 24, 112, &lv_font_montserrat_14, C_MUTED,
-             "Tap a station, then Call. Your own tile is not a destination.");
-    make_btn(strip, 836, 48, 116, 64, "Setup", "", on_setup, NULL);
+    s_home_headset = label_at(vol, 550, 42, &lv_font_montserrat_14, C_GREEN, "USB AUDIO WAITING");
+    s_home_status = label_at(vol, 550, 68, &lv_font_montserrat_16, C_TEXT, "Speaker off  /  Mic off");
+    clip_label(s_home_status, 390);
 }
 
 static void build_floor(lv_obj_t *v) {
