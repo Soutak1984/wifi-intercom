@@ -2848,55 +2848,73 @@ static void build_audio(lv_obj_t *v) {
 }
 
 static void build_setup(lv_obj_t *v) {
-    Btn back;
-    card_at(v, 24, 92, 620, 484, C_SURF, 20);
-    label_at(v, 52, 100, &lv_font_montserrat_14, C_MUTED, "SPEAKER VOLUME");
-    s_setup_vol = label_at(v, 540, 100, &lv_font_montserrat_14, C_TEXT, "60");
-    s_setup_slider_v = lv_slider_create(v);
-    lv_obj_set_pos(s_setup_slider_v, 52, 128);
-    lv_obj_set_size(s_setup_slider_v, 540, 28);
+    Btn b;
+    lv_obj_t *audio;
+    lv_obj_t *device;
+    label_at(v, 28, 88, &lv_font_montserrat_32, C_TEXT, "Audio & device settings");
+    label_at(v, 30, 126, &lv_font_montserrat_16, C_MUTED,
+             "Tune the local station, test the audio path and manage connectivity.");
+
+    audio = card_at(v, 28, 164, 574, 412, C_SURF, 22);
+    label_at(audio, 24, 20, &lv_font_montserrat_14, C_TEAL, "AUDIO CONTROLS");
+    label_at(audio, 24, 58, &lv_font_montserrat_16, C_TEXT, "Speaker volume");
+    s_setup_vol = label_at(audio, 492, 58, &lv_font_montserrat_16, C_TEXT, "60%");
+    s_setup_slider_v = lv_slider_create(audio);
+    lv_obj_set_pos(s_setup_slider_v, 24, 88);
+    lv_obj_set_size(s_setup_slider_v, 520, 24);
     style_slider(s_setup_slider_v);
     lv_obj_add_event_cb(s_setup_slider_v, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_setup_slider_v, on_volume, LV_EVENT_RELEASED, NULL);
-    label_at(v, 52, 168, &lv_font_montserrat_14, C_MUTED, "MIC GAIN");
-    s_setup_gain = label_at(v, 540, 168, &lv_font_montserrat_14, C_TEXT, "40");
-    s_setup_slider_g = lv_slider_create(v);
-    lv_obj_set_pos(s_setup_slider_g, 52, 196);
-    lv_obj_set_size(s_setup_slider_g, 540, 28);
+
+    label_at(audio, 24, 136, &lv_font_montserrat_16, C_TEXT, "Microphone gain");
+    s_setup_gain = label_at(audio, 492, 136, &lv_font_montserrat_16, C_TEXT, "40%");
+    s_setup_slider_g = lv_slider_create(audio);
+    lv_obj_set_pos(s_setup_slider_g, 24, 166);
+    lv_obj_set_size(s_setup_slider_g, 520, 24);
     style_slider(s_setup_slider_g);
     lv_obj_add_event_cb(s_setup_slider_g, on_gain, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_setup_slider_g, on_gain, LV_EVENT_RELEASED, NULL);
-    label_at(v, 52, 244, &lv_font_montserrat_14, C_MUTED, "ECHO DELAY");
-    s_aec_side = label_at(v, 500, 244, &lv_font_montserrat_14, C_TEXT, "40 ms");
-    make_btn(v, 52, 290, 80, 64, "-", "", on_aec_step, (void *)(intptr_t)-20);
-    s_aec_lbl = label_at(v, 200, 306, &lv_font_montserrat_22, C_TEXT, "40 ms");
-    label_at(v, 168, 334, &lv_font_montserrat_14, C_MUTED, "Applies while idle");
-    make_btn(v, 444, 290, 80, 64, "+", "", on_aec_step, (void *)(intptr_t)20);
-    label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
-    s_setup_meter = meter_bar(v, 52, 396, 540, 16, C_TEAL);
-    label_at(v, 52, 424, &lv_font_montserrat_14, C_MUTED, "Local only. The meter does not arm the microphone.");
-    make_btn(v, 52, 478, 170, 72, "Audio test", "Local tone", on_test, NULL);
+
+    label_at(audio, 24, 214, &lv_font_montserrat_16, C_TEXT, "Echo cancellation delay");
+    s_aec_side = label_at(audio, 456, 214, &lv_font_montserrat_16, C_TEAL, "40 ms");
+    make_btn(audio, 24, 244, 72, 52, "−", "", on_aec_step, (void *)(intptr_t)-20);
+    s_aec_lbl = label_at(audio, 126, 258, &lv_font_montserrat_22, C_TEXT, "40 ms");
+    make_btn(audio, 204, 244, 72, 52, "+", "", on_aec_step, (void *)(intptr_t)20);
+    label_at(audio, 300, 258, &lv_font_montserrat_14, C_MUTED, "Applies while idle");
+
+    label_at(audio, 24, 316, &lv_font_montserrat_14, C_MUTED, "LIVE MICROPHONE LEVEL");
+    s_setup_meter = meter_bar(audio, 24, 344, 520, 18, C_TEAL);
+    label_at(audio, 24, 376, &lv_font_montserrat_14, C_MUTED,
+             "Meter is local only. It does not activate transmission.");
+    b = make_btn(audio, 364, 292, 180, 44, "Audio test", "Play test tone", on_test, NULL);
+    tone(&b, T_AMBER);
+
+    device = card_at(v, 622, 164, 374, 412, 0xE7F0FA, 22);
+    label_at(device, 22, 20, &lv_font_montserrat_14, C_TEAL, "THIS STATION");
+    s_id_name = label_at(device, 22, 52, &lv_font_montserrat_28, C_TEXT, "");
+    clip_label(s_id_name, 320);
+    s_id_num = label_at(device, 22, 92, &lv_font_montserrat_16, C_MUTED, "");
+    s_id_ip = label_at(device, 22, 122, &lv_font_montserrat_20, C_TEXT, "");
+    s_id_gw = label_at(device, 22, 154, &lv_font_montserrat_14, C_MUTED, "");
+    s_id_mask = label_at(device, 22, 178, &lv_font_montserrat_14, C_MUTED, "");
+    s_warn = card_at(device, 18, 210, 338, 54, C_WARM, 12);
+    label_at(s_warn, 12, 18, &lv_font_montserrat_14, C_SUB_AMBER, "Change default key / PIN in Security");
     {
-        Btn netb = make_btn(v, 234, 478, 180, 72, "Station", "Name and IP", on_net_nav, NULL);
-        tone(&netb, T_AMBER);
+        Btn wifi = make_btn(device, 18, 278, 160, 58, "Wi-Fi", "Network login", on_wifi_nav, NULL);
+        tone(&wifi, T_TEAL);
     }
-    make_btn(v, 426, 478, 170, 72, "Power", "Battery", on_power, NULL);
-    card_at(v, 664, 92, 336, 300, C_SURF, 20);
-    label_at(v, 688, 116, &lv_font_montserrat_14, C_AMBER, "THIS STATION");
-    s_id_name = label_at(v, 688, 148, &lv_font_montserrat_28, C_TEXT, "");
-    clip_label(s_id_name, 280);
-    s_id_num = label_at(v, 688, 190, &lv_font_montserrat_20, C_MUTED, "");
-    s_id_ip = label_at(v, 688, 226, &lv_font_montserrat_20, C_TEXT, "");
-    s_id_gw = label_at(v, 688, 264, &lv_font_montserrat_16, C_MUTED, "");
-    s_id_mask = label_at(v, 688, 292, &lv_font_montserrat_16, C_MUTED, "");
-    label_at(v, 688, 332, &lv_font_montserrat_14, C_MUTED, "Edit station for the name and IP.");
-    back = make_btn(v, 860, 108, 116, 40, "Back", "", on_back_home, NULL);
-    lv_obj_set_style_text_font(back.title, &lv_font_montserrat_16, 0);
-    s_warn = card_at(v, 664, 408, 336, 168, C_WARM, 20);
-    label_at(s_warn, 24, 20, &lv_font_montserrat_14, C_AMBER, "DEFAULT KEY");
-    label_at(s_warn, 24, 56, &lv_font_montserrat_16, C_TEXT, "Change the shared key");
-    label_at(s_warn, 24, 84, &lv_font_montserrat_16, C_TEXT, "and the web PIN before");
-    label_at(s_warn, 24, 112, &lv_font_montserrat_16, C_TEXT, "this station is used.");
+    {
+        Btn net = make_btn(device, 194, 278, 160, 58, "Station", "Name and IP", on_net_nav, NULL);
+        tone(&net, T_SURFACE);
+    }
+    {
+        Btn sec = make_btn(device, 18, 346, 160, 48, "Security", "Key and PIN", on_security_nav, NULL);
+        tone(&sec, T_AMBER);
+    }
+    {
+        Btn power = make_btn(device, 194, 346, 160, 48, "Power", "Battery status", on_power, NULL);
+        tone(&power, T_SURFACE);
+    }
 }
 
 static void build_power(lv_obj_t *v) {
