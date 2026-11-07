@@ -500,9 +500,19 @@ extern "C" void ic_usb_in_cb(usb_transfer_t *t) {
     }
     if (s_log_next_in && t->num_isoc_packets > 0) {
         s_log_next_in = false;
-        Serial0.printf("usb: mic urb %d total %d packet %d bytes %d mps %u\n",
-                       (int)t->status, total, (int)t->isoc_packet_desc[0].status, nbytes0,
+        Serial0.printf("usb: mic urb status=%d total=%d packets=%d mps=%u\n",
+                       (int)t->status, total, (int)t->num_isoc_packets,
                        (unsigned)s_in.mps);
+        for (i = 0; i < t->num_isoc_packets; i++) {
+            Serial0.printf("usb: mic pkt[%d] status=%d req=%d actual=%d\n",
+                           i,
+                           (int)t->isoc_packet_desc[i].status,
+                           (int)t->isoc_packet_desc[i].num_bytes,
+                           (int)t->isoc_packet_desc[i].actual_num_bytes);
+        }
+    }
+    if (s_in_cbs <= 3 && t->status != USB_TRANSFER_STATUS_COMPLETED) {
+        Serial0.printf("usb: mic transfer error status=%d\n", (int)t->status);
     }
     if (s_streaming && t->status == USB_TRANSFER_STATUS_COMPLETED && s_in.sub > 0) {
         int nominal = ((s_in.rate + 999) / 1000) * (int)s_in.channels * (int)s_in.sub;
