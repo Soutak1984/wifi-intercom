@@ -18,6 +18,8 @@
  * and does not wait for a DMA switch. */
 
 static lv_disp_t *s_disp = nullptr;
+static uint16_t *s_fb0 = nullptr;
+static uint16_t *s_fb1 = nullptr;
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_disp_drv_t s_disp_drv;
 static lv_indev_drv_t s_indev_drv;
@@ -43,15 +45,40 @@ static void writeback_area(uint16_t *base, const lv_area_t *area) {
     }
 }
 
-/* LVGL direct mode owns the two complete RGB framebuffers. It renders into
- * the back buffer, synchronizes invalidated regions between buffers, then
- * hands the finished framebuffer to the RGB panel at the frame boundary. */
+/* LVGL direct mode renders into one full-size framebuffer. Once the RGB
+ * controller has switched to it at VSYNC, mirror only the changed rectangles
+ * into the now-idle framebuffer. This is required by LVGL direct mode: both
+ * buffers must contain the same complete image before the next refresh. */
 static void flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map) {
-    if (color_map && area) {
-        writeback_area((uint16_t *)color_map, area);
+    uint16_t i;
+    uint16_t *src = (uint16_t *)color_map;
+    uint16_t *dst;
+    (void)area;
+    if (!src) {
+        lv_disp_flush_ready(drv);
+        return;
     }
-    if (lv_disp_flush_is_last(drv) && color_map) {
-        if (!panel_7b_draw(color_map)) {
+    if (lv_disp_flush_is_last(drv)) {
+        dst = (src == s_fb0) ? s_fb1 : s_fb0;
+        if (!dst) {
+            Serial0.println("lvgl: framebuffer pair missing");
+        } else if (panel_7b_draw(src)) {
+            /* The RGB scanout has moved to src. The other buffer is now safe
+             * to update, and LVGL will use it on the next refresh. */
+            for (i = 0; i < s_disp->inv_p; i++) {
+                const lv_area_t *a = &s_disp->inv_areas[i];
+                int y;
+                int w;
+                if (s_disp->inv_area_joined[i]) continue;
+                w = a->x2 - a->x1 + 1;
+                if (w <= 0 || a->y2 < a->y1) continue;
+                for (y = a->y1; y <= a->y2; y++) {
+                    size_t off = (size_t)y * PANEL_W + a->x1;
+                    memcpy(&dst[off], &src[off], (size_t)w * sizeof(uint16_t));
+                }
+                writeback_area(dst, a);
+            }
+        } else {
             Serial0.println("lvgl: RGB framebuffer switch failed");
         }
     }
@@ -121,6 +148,8 @@ bool lvgl_port_start(void) {
     s_disp_drv.ver_res = PANEL_H;
     s_disp_drv.flush_cb = flush_cb;
     s_disp_drv.draw_buf = &s_draw_buf;
+    s_fb0 = (uint16_t *)fb0;
+    s_fb1 = (uint16_t *)fb1;
     s_disp_drv.direct_mode = 1;
     s_disp_drv.full_refresh = 0;
     s_disp = lv_disp_drv_register(&s_disp_drv);
