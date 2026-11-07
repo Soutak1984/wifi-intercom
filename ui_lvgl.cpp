@@ -12,6 +12,7 @@
 #include "lvgl.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "esp_log.h"
@@ -257,6 +258,8 @@ static lv_obj_t *s_setup_slider_g;
 static lv_obj_t *s_aec_lbl;
 static lv_obj_t *s_aec_side;
 static lv_obj_t *s_setup_meter;
+static lv_obj_t *s_setup_kb;
+static lv_obj_t *s_setup_active_ta;
 static lv_obj_t *s_id_name;
 static lv_obj_t *s_id_num;
 static lv_obj_t *s_id_ip;
@@ -825,27 +828,89 @@ static void on_aec_step(lv_event_t *e) {
     apply_aec(ms + (int)delta);
 }
 
+static void setup_field_text(lv_obj_t *field, const char *value) {
+    if (field && field != s_setup_active_ta) {
+        lv_textarea_set_text(field, value ? value : "");
+    }
+}
+
 static void vol_labels(int value) {
     char buf[8];
     snprintf(buf, sizeof(buf), "%d", value);
     set_text(s_home_vol, buf);
-    set_text(s_setup_vol, buf);
+    setup_field_text(s_setup_vol, buf);
     set_text(s_mu_vol, buf);
 }
 
 static void gain_label(int value) {
     char buf[24];
     snprintf(buf, sizeof(buf), "%d", value);
-    set_text(s_setup_gain, buf);
+    setup_field_text(s_setup_gain, buf);
     snprintf(buf, sizeof(buf), "MIC GAIN %d", value);
     set_text(s_mu_gain, buf);
 }
 
 static void aec_label(int ms) {
-    char buf[24];
-    snprintf(buf, sizeof(buf), "%d ms", ms);
-    set_text(s_aec_lbl, buf);
-    set_text(s_aec_side, buf);
+    char value[12];
+    char caption[24];
+    snprintf(value, sizeof(value), "%d", ms);
+    snprintf(caption, sizeof(caption), "%d ms", ms);
+    setup_field_text(s_aec_lbl, value);
+    set_text(s_aec_side, caption);
+}
+
+static void close_setup_keyboard(void) {
+    show(s_setup_kb, false);
+    s_setup_active_ta = NULL;
+}
+
+static void on_setup_field(lv_event_t *e) {
+    lv_obj_t *ta = lv_event_get_target(e);
+    lv_event_code_t code = lv_event_get_code(e);
+    if (!ta || (code != LV_EVENT_CLICKED && code != LV_EVENT_FOCUSED) || !s_setup_kb) {
+        return;
+    }
+    s_setup_active_ta = ta;
+    lv_keyboard_set_mode(s_setup_kb, LV_KEYBOARD_MODE_NUMBER);
+    lv_keyboard_set_textarea(s_setup_kb, ta);
+    show(s_setup_kb, true);
+    lv_obj_move_foreground(s_setup_kb);
+}
+
+static void on_setup_keyboard(lv_event_t *e) {
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *ta = s_setup_active_ta;
+    int value;
+    if (code == LV_EVENT_CANCEL) {
+        close_setup_keyboard();
+        return;
+    }
+    if (code != LV_EVENT_READY || !ta) {
+        return;
+    }
+    value = atoi(lv_textarea_get_text(ta));
+    show(s_setup_kb, false);
+    s_setup_active_ta = NULL;
+    if (ta == s_setup_vol) {
+        if (value > 100) value = 100;
+        if (value < 0) value = 0;
+        apply_volume(value, true);
+        sync_slider(s_setup_slider_v, value);
+        sync_slider(s_home_slider, value);
+        sync_slider(s_mu_slider, value);
+        vol_labels(value);
+    } else if (ta == s_setup_gain) {
+        if (value > 100) value = 100;
+        if (value < 0) value = 0;
+        apply_gain(value, true);
+        sync_slider(s_setup_slider_g, value);
+        gain_label(value);
+    } else if (ta == s_aec_lbl) {
+        if (value > 180) value = 180;
+        if (value < 0) value = 0;
+        apply_aec(value);
+        aec_label((value / 20) * 20);
+    }
 }
 
 static void on_volume(lv_event_t *e) {
@@ -1029,6 +1094,9 @@ static void show_net_field(int idx) {
         idx = NET_NAME;
     }
     s_net_active = idx;
+    if (s_net_kb) {
+        show(s_net_kb, false);
+    }
     if (s_net_ta) {
         lv_textarea_set_accepted_chars(s_net_ta, idx == NET_NAME ? NULL : "0123456789.");
         lv_textarea_set_max_length(s_net_ta, idx == NET_NAME ? (IC_NAME_LEN - 1) : 15);
@@ -1052,6 +1120,10 @@ static void on_net_field(lv_event_t *e) {
     }
     idx = (int)(intptr_t)lv_event_get_user_data(e);
     show_net_field(idx);
+    if (s_net_kb) {
+        show(s_net_kb, true);
+        lv_obj_move_foreground(s_net_kb);
+    }
 }
 
 static void on_net_sid(lv_event_t *e) {
@@ -1180,6 +1252,12 @@ static void paint_net(void) {
     }
 }
 
+static void on_input_keyboard(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CANCEL) {
+        show(lv_event_get_target(e), false);
+    }
+}
+
 static void on_ta(lv_event_t *e) {
     lv_obj_t *ta = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
@@ -1190,6 +1268,8 @@ static void on_ta(lv_event_t *e) {
     if (ta == s_net_ta) {
         if ((code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) && s_net_kb) {
             lv_keyboard_set_textarea(s_net_kb, ta);
+            show(s_net_kb, true);
+            lv_obj_move_foreground(s_net_kb);
         } else if (code == LV_EVENT_READY) {
             if (s_net_active + 1 < NET_N) {
                 show_net_field(s_net_active + 1);
@@ -1205,6 +1285,8 @@ static void on_ta(lv_event_t *e) {
     other = (ta == s_ssid_ta) ? s_pass_ta : s_ssid_ta;
     if (code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) {
         lv_keyboard_set_textarea(s_kb, ta);
+        show(s_kb, true);
+        lv_obj_move_foreground(s_kb);
         lv_obj_set_style_border_color(ta, lv_color_hex(C_AMBER), 0);
         if (other) {
             lv_obj_set_style_border_color(other, lv_color_hex(C_LINE), 0);
@@ -1242,6 +1324,7 @@ static void enter_wifi(void) {
     wifi_error("", C_MUTED);
     if (s_kb) {
         lv_keyboard_set_textarea(s_kb, s_ssid_ta);
+        show(s_kb, false);
     }
     lv_obj_set_style_border_color(s_ssid_ta, lv_color_hex(C_AMBER), 0);
     if (s_pass_ta) {
@@ -2062,6 +2145,15 @@ static void show_screen(int screen) {
         }
         show(s_views[i], i == screen);
     }
+    if (screen != SCR_SETUP && s_setup_kb) {
+        close_setup_keyboard();
+    }
+    if (screen != SCR_WIFI && s_kb) {
+        show(s_kb, false);
+    }
+    if (screen != SCR_NET && s_net_kb) {
+        show(s_net_kb, false);
+    }
     if (screen == SCR_WIFI && prev != SCR_WIFI) {
         enter_wifi();
     }
@@ -2693,7 +2785,17 @@ static void build_setup(lv_obj_t *v) {
     Btn back;
     card_at(v, 24, 92, 620, 484, C_SURF, 20);
     label_at(v, 52, 100, &lv_font_montserrat_14, C_MUTED, "SPEAKER VOLUME");
-    s_setup_vol = label_at(v, 540, 100, &lv_font_montserrat_14, C_TEXT, "60");
+    s_setup_vol = lv_textarea_create(v);
+    lv_obj_set_pos(s_setup_vol, 520, 90);
+    lv_obj_set_size(s_setup_vol, 104, 38);
+    style_ta(s_setup_vol);
+    lv_obj_set_style_pad_hor(s_setup_vol, 8, 0);
+    lv_obj_set_style_pad_ver(s_setup_vol, 6, 0);
+    lv_textarea_set_one_line(s_setup_vol, true);
+    lv_textarea_set_accepted_chars(s_setup_vol, "0123456789");
+    lv_textarea_set_max_length(s_setup_vol, 3);
+    lv_textarea_set_text(s_setup_vol, "60");
+    lv_obj_add_event_cb(s_setup_vol, on_setup_field, LV_EVENT_ALL, NULL);
     s_setup_slider_v = lv_slider_create(v);
     lv_obj_set_pos(s_setup_slider_v, 52, 128);
     lv_obj_set_size(s_setup_slider_v, 540, 28);
@@ -2701,7 +2803,17 @@ static void build_setup(lv_obj_t *v) {
     lv_obj_add_event_cb(s_setup_slider_v, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_setup_slider_v, on_volume, LV_EVENT_RELEASED, NULL);
     label_at(v, 52, 168, &lv_font_montserrat_14, C_MUTED, "MIC GAIN");
-    s_setup_gain = label_at(v, 540, 168, &lv_font_montserrat_14, C_TEXT, "40");
+    s_setup_gain = lv_textarea_create(v);
+    lv_obj_set_pos(s_setup_gain, 520, 158);
+    lv_obj_set_size(s_setup_gain, 104, 38);
+    style_ta(s_setup_gain);
+    lv_obj_set_style_pad_hor(s_setup_gain, 8, 0);
+    lv_obj_set_style_pad_ver(s_setup_gain, 6, 0);
+    lv_textarea_set_one_line(s_setup_gain, true);
+    lv_textarea_set_accepted_chars(s_setup_gain, "0123456789");
+    lv_textarea_set_max_length(s_setup_gain, 3);
+    lv_textarea_set_text(s_setup_gain, "40");
+    lv_obj_add_event_cb(s_setup_gain, on_setup_field, LV_EVENT_ALL, NULL);
     s_setup_slider_g = lv_slider_create(v);
     lv_obj_set_pos(s_setup_slider_g, 52, 196);
     lv_obj_set_size(s_setup_slider_g, 540, 28);
@@ -2711,7 +2823,17 @@ static void build_setup(lv_obj_t *v) {
     label_at(v, 52, 244, &lv_font_montserrat_14, C_MUTED, "ECHO DELAY");
     s_aec_side = label_at(v, 500, 244, &lv_font_montserrat_14, C_TEXT, "40 ms");
     make_btn(v, 52, 290, 80, 64, "-", "", on_aec_step, (void *)(intptr_t)-20);
-    s_aec_lbl = label_at(v, 200, 306, &lv_font_montserrat_22, C_TEXT, "40 ms");
+    s_aec_lbl = lv_textarea_create(v);
+    lv_obj_set_pos(s_aec_lbl, 180, 296);
+    lv_obj_set_size(s_aec_lbl, 160, 48);
+    style_ta(s_aec_lbl);
+    lv_obj_set_style_pad_hor(s_aec_lbl, 12, 0);
+    lv_obj_set_style_pad_ver(s_aec_lbl, 8, 0);
+    lv_textarea_set_one_line(s_aec_lbl, true);
+    lv_textarea_set_accepted_chars(s_aec_lbl, "0123456789");
+    lv_textarea_set_max_length(s_aec_lbl, 3);
+    lv_textarea_set_text(s_aec_lbl, "40");
+    lv_obj_add_event_cb(s_aec_lbl, on_setup_field, LV_EVENT_ALL, NULL);
     label_at(v, 168, 334, &lv_font_montserrat_14, C_MUTED, "Applies while idle");
     make_btn(v, 444, 290, 80, 64, "+", "", on_aec_step, (void *)(intptr_t)20);
     label_at(v, 52, 372, &lv_font_montserrat_14, C_MUTED, "MIC LEVEL");
@@ -2735,6 +2857,14 @@ static void build_setup(lv_obj_t *v) {
     back = make_btn(v, 860, 108, 116, 40, "Back", "", on_back_home, NULL);
     lv_obj_set_style_text_font(back.title, &lv_font_montserrat_16, 0);
     s_warn = card_at(v, 664, 408, 336, 168, C_WARM, 20);
+    s_setup_kb = lv_keyboard_create(v);
+    lv_obj_set_pos(s_setup_kb, 0, 380);
+    lv_obj_set_size(s_setup_kb, PANEL_W, 220);
+    style_keyboard(s_setup_kb);
+    lv_keyboard_set_mode(s_setup_kb, LV_KEYBOARD_MODE_NUMBER);
+    lv_obj_add_event_cb(s_setup_kb, on_setup_keyboard, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(s_setup_kb, on_setup_keyboard, LV_EVENT_CANCEL, NULL);
+    show(s_setup_kb, false);
     label_at(s_warn, 24, 20, &lv_font_montserrat_14, C_AMBER, "DEFAULT KEY");
     label_at(s_warn, 24, 56, &lv_font_montserrat_16, C_TEXT, "Change the shared key");
     label_at(s_warn, 24, 84, &lv_font_montserrat_16, C_TEXT, "and the web PIN before");
@@ -2838,7 +2968,8 @@ static void build_wifi(lv_obj_t *v) {
     style_keyboard(s_kb);
     lv_keyboard_set_mode(s_kb, LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(s_kb, s_ssid_ta);
-    lv_obj_move_foreground(s_kb);
+    lv_obj_add_event_cb(s_kb, on_input_keyboard, LV_EVENT_CANCEL, NULL);
+    show(s_kb, false);
 }
 
 static void build_net(lv_obj_t *v) {
@@ -2874,7 +3005,8 @@ static void build_net(lv_obj_t *v) {
     lv_obj_set_size(s_net_kb, PANEL_W, 192);
     style_keyboard(s_net_kb);
     lv_keyboard_set_textarea(s_net_kb, s_net_ta);
-    lv_obj_move_foreground(s_net_kb);
+    lv_obj_add_event_cb(s_net_kb, on_input_keyboard, LV_EVENT_CANCEL, NULL);
+    show(s_net_kb, false);
 }
 
 static void build_splash(void) {
