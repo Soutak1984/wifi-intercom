@@ -25,33 +25,33 @@
 static const char *TAG = "ic_lvgl";
 
 static const uint32_t C_BG = 0x14110E;
-static const uint32_t C_BAR = 0x221C17;
+static const uint32_t C_BAR = 0x100E0C;
 static const uint32_t C_SURF = 0x221C17;
 static const uint32_t C_SURF2 = 0x2C251E;
 static const uint32_t C_LINE = 0x4A3E34;
 static const uint32_t C_TEXT = 0xF6F1E8;
 static const uint32_t C_MUTED = 0xA89888;
 static const uint32_t C_AMBER = 0xE4A04A;
-static const uint32_t C_INK = 0x221C17;
+static const uint32_t C_INK = 0x2A1C0A;
 static const uint32_t C_GREEN = 0x8FB573;
 static const uint32_t C_RED = 0xD4654E;
 static const uint32_t C_TEAL = 0x7EAEA4;
 static const uint32_t C_PRESS = 0x3A312A;
 static const uint32_t C_TEAL_BG = 0x1C2C2A;
-static const uint32_t C_CALL_BG = 0x1C2C2A;
+static const uint32_t C_CALL_BG = 0x243024;
 static const uint32_t C_WARM = 0x3A2C18;
-static const uint32_t C_ALERT = 0x3A211D;
-static const uint32_t C_INK_RED = 0x221C17;
-static const uint32_t C_SUB_RED = 0x221C17;
-static const uint32_t C_SUB_AMBER = 0x221C17;
-static const uint32_t C_OFF = 0x75685C;
+static const uint32_t C_ALERT = 0x3A221C;
+static const uint32_t C_INK_RED = 0xF6F1E8;
+static const uint32_t C_SUB_RED = 0xF0C8C0;
+static const uint32_t C_SUB_AMBER = 0x2A1C0A;
+static const uint32_t C_OFF = 0x6A5C50;
 static const uint32_t C_DIM = 0x75685C;
 static const uint32_t C_TEAL_INK = 0x4E726C;
-static const uint32_t C_CREAM = 0x221C17;
-static const uint32_t C_KEY = 0x221C17;
+static const uint32_t C_CREAM = 0xE6D7C3;
+static const uint32_t C_KEY = 0x2C251E;
 static const uint32_t C_KEY_INK = 0xF6F1E8;
-static const uint32_t C_ST_BG[4] = {0x3A211D, 0xE8F3FC, 0xE8F5EF, 0xF0ECFC};
-static const uint32_t C_ST_EDGE[4] = {0xD4654E, 0x7EAEA4, 0x8FB573, 0x7962CE};
+static const uint32_t C_ST_BG[4] = {0x2C251E, 0x221C17, 0x3A2C18, 0x221C17};
+static const uint32_t C_ST_EDGE[4] = {0x4A3E34, 0x4A3E34, 0xE4A04A, 0x4A3E34};
 
 enum {
     SCR_SPLASH = 0,
@@ -985,7 +985,7 @@ static void style_keyboard(lv_obj_t *kb) {
 }
 
 static void style_ta(lv_obj_t *ta) {
-    lv_obj_set_style_bg_color(ta, lv_color_hex(0x221C17), 0);
+    lv_obj_set_style_bg_color(ta, lv_color_hex(0x2C251E), 0);
     lv_obj_set_style_bg_opa(ta, LV_OPA_COVER, 0);
     lv_obj_set_style_text_color(ta, lv_color_hex(C_TEXT), 0);
     lv_obj_set_style_text_font(ta, &lv_font_montserrat_20, 0);
@@ -2493,7 +2493,7 @@ static void build_bar(void) {
         lv_obj_set_pos(body, 888, 28);
         lv_obj_set_size(body, 28, 14);
         plain(body);
-        lv_obj_set_style_bg_color(body, lv_color_hex(0x14110E), 0);
+        lv_obj_set_style_bg_color(body, lv_color_hex(C_BG), 0);
         lv_obj_set_style_bg_opa(body, LV_OPA_COVER, 0);
         lv_obj_set_style_border_color(body, lv_color_hex(C_TEXT), 0);
         lv_obj_set_style_border_width(body, 2, 0);
@@ -2520,11 +2520,11 @@ static void build_bar(void) {
 }
 
 static void build_home(lv_obj_t *v) {
-    static const int xs[] = {32, 276, 520, 764};
+    static const int xs[] = {24, 268, 512, 756};
     int i;
     lv_obj_t *strip;
-    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "Station directory");
-    label_at(v, 24, 284, &lv_font_montserrat_14, C_MUTED, "Tap a station, then Call. Your own tile is not a destination.");
+    label_at(v, 24, 78, &lv_font_montserrat_28, C_TEXT, "");
+    label_at(v, 24, 284, &lv_font_montserrat_14, C_MUTED, "");
     for (i = 0; i < 4; i++) {
         s_home_card[i] = make_station(v, xs[i], 96);
         bind_station(&s_home_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
@@ -2536,10 +2536,10 @@ static void build_home(lv_obj_t *v) {
     s_end_b = make_btn(v, 808, 308, 192, 96, "End", "Idle", on_end, NULL);
     strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
     label_at(strip, 24, 14, &lv_font_montserrat_14, C_MUTED, "SPEAKER");
-    s_home_vol = label_at(strip, 500, 14, &lv_font_montserrat_14, C_TEXT, "60");
+    s_home_vol = label_at(strip, 568, 14, &lv_font_montserrat_14, C_TEXT, "60");
     s_home_slider = lv_slider_create(strip);
     lv_obj_set_pos(s_home_slider, 24, 42);
-    lv_obj_set_size(s_home_slider, 520, 16);
+    lv_obj_set_size(s_home_slider, 520, 8);
     style_slider(s_home_slider);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(s_home_slider, on_volume, LV_EVENT_RELEASED, NULL);
@@ -2549,15 +2549,13 @@ static void build_home(lv_obj_t *v) {
     clip_label(s_home_status, 250);
     label_at(strip, 24, 112, &lv_font_montserrat_14, C_MUTED,
              "Tap a station, then Call. Your own tile is not a destination.");
-    make_btn(strip, 836, 56, 116, 64, "Setup", "", on_setup, NULL);
+    make_btn(strip, 836, 48, 116, 64, "Setup", "", on_setup, NULL);
 }
 
 static void build_floor(lv_obj_t *v) {
     static const int xs[] = {24, 268, 512, 756};
     int i;
     lv_obj_t *strip;
-    label_at(v, 32, 96, &lv_font_montserrat_28, C_TEXT, "Floor console");
-    label_at(v, 32, 130, &lv_font_montserrat_14, C_MUTED, "Select a station to call; microphone stays muted until Talk");
     for (i = 0; i < 4; i++) {
         s_floor_card[i] = make_station(v, xs[i], 112);
         bind_station(&s_floor_card[i], (uint16_t)(IC_STATION_MIN + i), on_select);
@@ -2567,7 +2565,7 @@ static void build_floor(lv_obj_t *v) {
     s_fpage = make_btn(v, 576, 308, 210, 96, "Page", "Reception only", on_page, NULL);
     s_fend = make_btn(v, 802, 308, 198, 96, "End", "Idle", on_end, NULL);
     strip = card_at(v, 24, 428, 976, 148, C_SURF, 18);
-    s_floor_title = label_at(strip, 24, 28, &lv_font_montserrat_22, C_AMBER, "Microphone off");
+    s_floor_title = label_at(strip, 24, 18, &lv_font_montserrat_22, C_AMBER, "Microphone off");
     {
         lv_obj_t *hint = label_at(strip, 24, 64, &lv_font_montserrat_16, C_MUTED,
                                   "Nothing is sent until a call is connected. The armed latch clears on hangup.");
@@ -2954,34 +2952,34 @@ static void build_power(lv_obj_t *v) {
 static void build_wifi(lv_obj_t *v) {
     Btn hide;
     Btn save;
-    label_at(v, 48, 78, &lv_font_montserrat_36, C_TEXT, "Wi-Fi");
-    label_at(v, 220, 92, &lv_font_montserrat_16, C_MUTED,
+    label_at(v, 48, 84, &lv_font_montserrat_36, C_TEXT, "Wi-Fi");
+    label_at(v, 220, 112, &lv_font_montserrat_16, C_MUTED,
              "Tap a box. Empty password means an open network.");
-    label_at(v, 48, 128, &lv_font_montserrat_14, C_TEAL, "NETWORK NAME");
+    label_at(v, 48, 156, &lv_font_montserrat_14, C_TEAL, "NETWORK NAME");
     s_ssid_ta = lv_textarea_create(v);
-    lv_obj_set_pos(s_ssid_ta, 48, 150);
-    lv_obj_set_size(s_ssid_ta, 928, 48);
+    lv_obj_set_pos(s_ssid_ta, 48, 184);
+    lv_obj_set_size(s_ssid_ta, 928, 52);
     style_ta(s_ssid_ta);
     lv_textarea_set_one_line(s_ssid_ta, true);
     lv_textarea_set_max_length(s_ssid_ta, 32);
     lv_textarea_set_placeholder_text(s_ssid_ta, "SSID");
     lv_obj_add_event_cb(s_ssid_ta, on_ta, LV_EVENT_ALL, NULL);
-    label_at(v, 48, 206, &lv_font_montserrat_14, C_TEAL, "PASSWORD");
+    label_at(v, 48, 244, &lv_font_montserrat_14, C_TEAL, "PASSWORD");
     s_pass_ta = lv_textarea_create(v);
-    lv_obj_set_pos(s_pass_ta, 48, 228);
-    lv_obj_set_size(s_pass_ta, 760, 48);
+    lv_obj_set_pos(s_pass_ta, 48, 274);
+    lv_obj_set_size(s_pass_ta, 760, 52);
     style_ta(s_pass_ta);
     lv_textarea_set_one_line(s_pass_ta, true);
     lv_textarea_set_max_length(s_pass_ta, 63);
     lv_textarea_set_placeholder_text(s_pass_ta, "Password");
     lv_obj_add_event_cb(s_pass_ta, on_ta, LV_EVENT_ALL, NULL);
-    hide = make_btn(v, 824, 228, 152, 48, "Hide", "", on_hide, NULL);
+    hide = make_btn(v, 824, 274, 152, 52, "Hide", "", on_hide, NULL);
     s_hide_lbl = hide.title;
-    s_wifi_err = label_at(v, 48, 286, &lv_font_montserrat_16, C_MUTED, "");
+    s_wifi_err = label_at(v, 48, 332, &lv_font_montserrat_16, C_MUTED, "");
     clip_label(s_wifi_err, 490);
-    save = make_btn(v, 560, 278, 200, 48, "Save", "", on_wifi_save, NULL);
+    save = make_btn(v, 560, 328, 200, 52, "Save", "", on_wifi_save, NULL);
     tone(&save, T_AMBER);
-    make_btn(v, 776, 278, 200, 48, "Back", "", on_back_setup, NULL);
+    make_btn(v, 776, 328, 200, 52, "Back", "", on_back_setup, NULL);
     s_kb = lv_keyboard_create(v);
     lv_obj_set_pos(s_kb, 0, 392);
     lv_obj_set_size(s_kb, PANEL_W, 208);
