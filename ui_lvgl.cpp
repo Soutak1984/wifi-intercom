@@ -287,7 +287,6 @@ static lv_obj_t *s_sec_key_ta;
 static lv_obj_t *s_sec_pin_ta;
 static lv_obj_t *s_sec_kb;
 static lv_obj_t *s_sec_err;
-static lv_obj_t *s_sec_active;
 static lv_obj_t *s_net_cap;
 static lv_obj_t *s_net_err;
 static Btn s_net_field[NET_N];
@@ -1197,7 +1196,6 @@ static void security_enter(void) {
     key[IC_KEY_LEN] = 0;
     lv_textarea_set_text(s_sec_key_ta, key);
     lv_textarea_set_text(s_sec_pin_ta, copy.pin);
-    s_sec_active = s_sec_key_ta;
     lv_keyboard_set_textarea(s_sec_kb, s_sec_key_ta);
     security_error("Key: exactly 16 printable characters. PIN: 4–8 letters or digits.", C_MUTED);
     s_security_filled = true;
@@ -1216,13 +1214,11 @@ static void security_commit(void) {
     snprintf(pin, sizeof(pin), "%s", p ? p : "");
     if (!ic_config_key_ok(key)) {
         security_error("Shared key must be exactly 16 printable characters.", C_RED);
-        s_sec_active = s_sec_key_ta;
         lv_keyboard_set_textarea(s_sec_kb, s_sec_key_ta);
         return;
     }
     if (!ic_config_pin_ok(pin)) {
         security_error("Web PIN must be 4–8 letters or digits.", C_RED);
-        s_sec_active = s_sec_pin_ta;
         lv_keyboard_set_textarea(s_sec_kb, s_sec_pin_ta);
         return;
     }
@@ -1252,7 +1248,6 @@ static void on_security_ta(lv_event_t *e) {
     lv_obj_t *ta = lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) {
-        s_sec_active = ta;
         if (s_sec_kb) lv_keyboard_set_textarea(s_sec_kb, ta);
     } else if (code == LV_EVENT_READY) {
         if (ta == s_sec_key_ta) {
