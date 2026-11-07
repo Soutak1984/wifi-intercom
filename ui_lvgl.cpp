@@ -23,30 +23,32 @@
 
 static const char *TAG = "ic_lvgl";
 
-static const uint32_t C_BG = 0x0E1628;
-static const uint32_t C_BAR = 0x121E36;
-static const uint32_t C_SURF = 0x1A2A4A;
-static const uint32_t C_SURF2 = 0x24385F;
-static const uint32_t C_LINE = 0x3E5A8A;
-static const uint32_t C_TEXT = 0xF5F8FC;
-static const uint32_t C_MUTED = 0xA9B8D0;
-static const uint32_t C_AMBER = 0xFFB020;
-static const uint32_t C_INK = 0x1A1204;
-static const uint32_t C_GREEN = 0x3DDC97;
-static const uint32_t C_RED = 0xFF5D73;
-static const uint32_t C_TEAL = 0x3EC8E0;
-static const uint32_t C_PRESS = 0x2C4A78;
-static const uint32_t C_TEAL_BG = 0x12343C;
-static const uint32_t C_CALL_BG = 0x143228;
-static const uint32_t C_WARM = 0x3A2A12;
-static const uint32_t C_ALERT = 0x3A1824;
+/* Midnight glass palette: deep blue surfaces with high-contrast, distinct
+ * action colours. Keep status colours consistent across every screen. */
+static const uint32_t C_BG = 0x071526;
+static const uint32_t C_BAR = 0x0B1F35;
+static const uint32_t C_SURF = 0x102A45;
+static const uint32_t C_SURF2 = 0x183B5B;
+static const uint32_t C_LINE = 0x2D5D7A;
+static const uint32_t C_TEXT = 0xF2F8FF;
+static const uint32_t C_MUTED = 0xA9BED3;
+static const uint32_t C_AMBER = 0xFFC857;
+static const uint32_t C_INK = 0x241A05;
+static const uint32_t C_GREEN = 0x4DE3A1;
+static const uint32_t C_RED = 0xFF6078;
+static const uint32_t C_TEAL = 0x48DDE8;
+static const uint32_t C_PRESS = 0x265475;
+static const uint32_t C_TEAL_BG = 0x103A43;
+static const uint32_t C_CALL_BG = 0x123A31;
+static const uint32_t C_WARM = 0x443116;
+static const uint32_t C_ALERT = 0x401D2B;
 static const uint32_t C_INK_RED = 0x2A0C12;
 static const uint32_t C_SUB_RED = 0x7A3040;
-static const uint32_t C_SUB_AMBER = 0x7A5410;
-static const uint32_t C_OFF = 0x6E7E98;
-static const uint32_t C_DIM = 0x5A6A84;
-static const uint32_t C_TEAL_INK = 0x1A6070;
-static const uint32_t C_CREAM = 0xE7EEF8;
+static const uint32_t C_SUB_AMBER = 0x805A16;
+static const uint32_t C_OFF = 0x71869F;
+static const uint32_t C_DIM = 0x5D728A;
+static const uint32_t C_TEAL_INK = 0x145D68;
+static const uint32_t C_CREAM = 0xEAF3FC;
 static const uint32_t C_KEY = 0xF4F7FB;
 static const uint32_t C_KEY_INK = 0x122033;
 static const uint32_t C_ST_BG[4] = {0x3A2430, 0x12343C, 0x143228, 0x1A2748};
